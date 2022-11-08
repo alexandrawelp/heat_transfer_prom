@@ -266,7 +266,7 @@ class PointND:
         alpha = Nu_x * self.lam_v / d
         print(f"alpha_Gas: {alpha}")
         return alpha
-
+    # TODO: create testcases, then merge three similar functions above, differ only in Re
     def alpha_sieden(self, m_dot, d, z_i):
         """
         calculates heat transfer coefficient in two-phase region, uses nucleate boiling and convective boiling
