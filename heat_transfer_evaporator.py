@@ -105,24 +105,13 @@ class PointND:
         fr_v = m_dot ** 2 * self.q ** 2 / (self.rho_v ** 2 * g * d)
         return fr_v
 
-    def alpha_1P_l(self, m_dot, d, z_i):
+    def alpha_1p_l(self, m_dot: float, d: float, z_i: float) -> float:
         """
         calculates heat transfer under assumption that whole flow is liquid
-
-        Parameters
-        ----------
-        m_dot : TYPE float.
-            DESCRIPTION. overall mass flow rate per area [kg/s/m^2]
-        d : TYPE float. 
-            DESCRIPTION. diameter [m]
-        z_i : TYPE float.
-            DESCRIPTION. local variable in tube [m]
-
-        Returns
-        -------
-        alpha : TYPE float.
-            DESCRIPTION. heat transfer coefficient [W/m^2*K]
-
+        :param m_dot: overall mass flow rate per area [kg/s/m^2]
+        :param d: diameter [m]
+        :param z_i: local variable in tube [m]
+        :return: heat transfer coefficient [W/m^2*K]
         """
         if z_i == 0:
             z_i = 1e-5
@@ -131,46 +120,52 @@ class PointND:
         else:
             dz = d / z_i
 
-        Re_l0 = m_dot * d / self.dyn_vis_l
-        xi = (1.82 * np.log10(Re_l0) - 1.64) ** (-2)
-        Nu_inf = xi / 8 * (Re_l0 - 1000) * self.pr_l \
-                 / (1 + 12.7 * (xi / 8) ** 0.5 * (self.pr_l ** (2 / 3) - 1))
+        re_l0 = m_dot * d / self.dyn_vis_l
+        xi = (1.82 * np.log10(re_l0) - 1.64) ** (-2)
+        nu_inf = xi / 8 * (re_l0 - 1000) * self.pr_l / (1 + 12.7 * (xi / 8) ** 0.5 * (self.pr_l ** (2 / 3) - 1))
 
         # laminar case:
-        Nu_x_lam = 0
-        if Re_l0 < 5 * 10 ** 4:
+        nu_x_lam = 0
+        if re_l0 < 5 * 10 ** 4:
 
             if RB == 'Tw':
                 if inlet_flow == 'true':
-                    Nu_x_lam = 0.332 * self.pr_l ** (1 / 3) * (Re_l0 * dz) ** (1 / 2)
+                    nu_x_lam = 0.332 * self.pr_l ** (1 / 3) * (re_l0 * dz) ** (1 / 2)
                 if inlet_flow == 'false':
-                    Nu_x_lam = (3.66 ** 3 + 1.077 ** 3 * Re_l0 * self.pr_l * dz) ** (1 / 3)
+                    nu_x_lam = (3.66 ** 3 + 1.077 ** 3 * re_l0 * self.pr_l * dz) ** (1 / 3)
 
             if RB == 'qzu':
                 if inlet_flow == 'true':
-                    Nu_x_lam = 0.455 * self.pr_l ** (1 / 3) * (Re_l0 * dz) ** 0.5
+                    nu_x_lam = 0.455 * self.pr_l ** (1 / 3) * (re_l0 * dz) ** 0.5
                 if inlet_flow == 'false':
-                    Nu_x_lam = (4.36 ** 3 + 1.302 ** 3 * Re_l0 * self.pr_l * dz) ** (1 / 3)
+                    nu_x_lam = (4.36 ** 3 + 1.302 ** 3 * re_l0 * self.pr_l * dz) ** (1 / 3)
 
         # turbulent case:
-        Nu_x_turb = 0
-        if Re_l0 >= 2300:
+        nu_x_turb = 0
+        if re_l0 >= 2300:
             if inlet_flow == 'true':
                 if d / z_i >= 1:
-                    Nu_x_turb = 4 / 3 * Nu_inf
+                    nu_x_turb = 4 / 3 * nu_inf
                 else:
-                    Nu_x_turb = Nu_inf * (1 + 1 / 3 * (dz) ** (2 / 3))
+                    nu_x_turb = nu_inf * (1 + 1 / 3 * dz ** (2 / 3))
             if inlet_flow == 'false':
-                Nu_x_turb = Nu_inf
+                nu_x_turb = nu_inf
 
-        if Nu_x_turb > Nu_x_lam:
-            Nu_x = Nu_x_turb
+        if nu_x_turb > nu_x_lam:
+            nu_x = nu_x_turb
         else:
-            Nu_x = Nu_x_lam
-        alpha = Nu_x * self.lam_l / d
+            nu_x = nu_x_lam
+        alpha = nu_x * self.lam_l / d
         return alpha
 
-    def alpha_1P_v(self, m_dot, d, z_i):
+    def alpha_1p_v(self, m_dot: float, d: float, z_i: float) -> float:
+        """
+        calculates heat transfer under assumption that whole flow is gaseous
+        :param m_dot: overall mass flow rate per area [kg/s/m^2]
+        :param d: diameter [m]
+        :param z_i: z_i: local variable in tube [m]
+        :return: heat transfer coefficient [W/m^2*K]
+        """
         if z_i == 0:
             z_i = 1e-5
         if d / z_i >= 1:
@@ -178,46 +173,54 @@ class PointND:
         else:
             dz = d / z_i
 
-        Re_v0 = m_dot * d / self.dyn_vis_v
-        xi = (1.82 * np.log10(Re_v0) - 1.64) ** (-2)
-        Nu_inf = xi / 8 * (Re_v0 - 1000) * self.pr_v \
+        re_v0 = m_dot * d / self.dyn_vis_v
+        xi = (1.82 * np.log10(re_v0) - 1.64) ** (-2)
+        nu_inf = xi / 8 * (re_v0 - 1000) * self.pr_v \
                  / (1 + 12.7 * (xi / 8) ** 0.5 * (self.pr_v ** (2 / 3) - 1))
 
         # laminar case:
-        Nu_x_lam = 0
-        if Re_v0 < 5 * 10 ** 4:
+        nu_x_lam = 0
+        if re_v0 < 5 * 10 ** 4:
 
             if RB == 'Tw':
                 if inlet_flow == 'true':
-                    Nu_x_lam = 0.332 * self.pr_v ** (1 / 3) * (Re_v0 * dz) ** (1 / 2)
+                    nu_x_lam = 0.332 * self.pr_v ** (1 / 3) * (re_v0 * dz) ** (1 / 2)
                 if inlet_flow == 'false':
-                    Nu_x_lam = (3.66 ** 3 + 1.077 ** 3 * Re_v0 * self.pr_v * dz) ** (1 / 3)
+                    nu_x_lam = (3.66 ** 3 + 1.077 ** 3 * re_v0 * self.pr_v * dz) ** (1 / 3)
 
             if RB == 'qzu':
                 if inlet_flow == 'true':
-                    Nu_x_lam = 0.455 * self.pr_v ** (1 / 3) * (Re_v0 * dz) ** 0.5
+                    nu_x_lam = 0.455 * self.pr_v ** (1 / 3) * (re_v0 * dz) ** 0.5
                 if inlet_flow == 'false':
-                    Nu_x_lam = (4.36 ** 3 + 1.302 ** 3 * Re_v0 * self.pr_v * dz) ** (1 / 3)
+                    nu_x_lam = (4.36 ** 3 + 1.302 ** 3 * re_v0 * self.pr_v * dz) ** (1 / 3)
 
-        # tubulent case:
-        Nu_x_turb = 0
-        if Re_v0 >= 2300:
+        # turbulent case:
+        nu_x_turb = 0
+        if re_v0 >= 2300:
             if inlet_flow == 'true':
                 if d / z_i >= 1:
-                    Nu_x_turb = 4 / 3 * Nu_inf
+                    nu_x_turb = 4 / 3 * nu_inf
                 else:
-                    Nu_x_turb = Nu_inf * (1 + 1 / 3 * (dz) ** (2 / 3))
+                    nu_x_turb = nu_inf * (1 + 1 / 3 * dz ** (2 / 3))
             if inlet_flow == 'false':
-                Nu_x_turb = Nu_inf
+                nu_x_turb = nu_inf
 
-        if Nu_x_turb > Nu_x_lam:
-            Nu_x = Nu_x_turb
+        if nu_x_turb > nu_x_lam:
+            nu_x = nu_x_turb
         else:
-            Nu_x = Nu_x_lam
-        alpha = Nu_x * self.lam_v / d
+            nu_x = nu_x_lam
+        alpha = nu_x * self.lam_v / d
         return alpha
 
-    def alpha_g_cal(self, m_dot, d, z_i, dhg):
+    def alpha_g_cal(self, m_dot: float, d: float, z_i: float, dhg: float) -> float:
+        """
+
+        :param m_dot:
+        :param d:
+        :param z_i:
+        :param dhg:
+        :return:
+        """
         if z_i == 0:
             z_i = 1e-5
         if dhg / z_i >= 1:
@@ -276,7 +279,7 @@ class PointND:
         # step 1: does nucleate boiling need to be considered?
         r_cr = 0.3e-6  # [m]
 
-        alpha_LO_start = self.alpha_1P_l(m_dot, d,
+        alpha_LO_start = self.alpha_1p_l(m_dot, d,
                                          0)  # lokale einphasige Wärmeübergangskoeffizient an der Stelle z=0 für Flüssigkeit
         print(f"alpha_LO_start: {alpha_LO_start}")
 
@@ -334,7 +337,7 @@ class PointND:
             q_dot_kr = 0.144 * point_tem.h_evap * ((point_tem.rho_l \
                                                     - point_tem.rho_v) * point_tem.rho_v) ** 0.5 \
                        * ((g * point_tem.sigma) / point_tem.rho_l) ** 0.25 \
-                       * point_tem.pr_l ** (-0.245)  #TODO: which pradtl number has to be used here?
+                       * point_tem.pr_l ** (-0.245)  # TODO: which pradtl number has to be used here?
 
             del (point_tem)
 
@@ -358,9 +361,9 @@ class PointND:
                 alpha_b = alpha_b_hzw
 
         ### step 2: convective boiling
-        alpha_LO = self.alpha_1P_l(m_dot, d, z_i)
+        alpha_LO = self.alpha_1p_l(m_dot, d, z_i)
         # print(f"alpha_LO: {alpha_LO}")
-        alpha_GO = self.alpha_1P_v(m_dot, d, z_i)
+        alpha_GO = self.alpha_1p_v(m_dot, d, z_i)
         # print(f"alpha_GO: {alpha_GO}")
         # print("alpha_GO :", alpha_GO)
         alpha_quotient = ((1 - self.q) ** 0.01 * ((1 - self.q) + 1.2 * self.q ** 0.4 \
@@ -432,10 +435,10 @@ class PointND:
             # print(f"In Schleife: q: {self.q}, rho_v: {self.rho_v}, rho_l: {self.rho_l} dyn_vis_l: {self.dyn_vis_l}, dyn_vis_v: {self.dyn_vis_v}")
             X = ((1 - self.q) / self.q) ** 0.875 * \
                 (self.rho_v / self.rho_l) ** 0.5 * (
-                            self.dyn_vis_l / self.dyn_vis_v) ** 0.125  # Martinelli-Parameter, H3.1 2.1 (1)
+                        self.dyn_vis_l / self.dyn_vis_v) ** 0.125  # Martinelli-Parameter, H3.1 2.1 (1)
         ReFr05 = (m_dot ** 3 * self.q ** 2 * (1 - self.q) / (self.rho_v \
                                                              * (
-                                                                         self.rho_l - self.rho_v) * self.dyn_vis_l * g)) ** 0.5  # H3.1 2.1 (2)
+                                                                     self.rho_l - self.rho_v) * self.dyn_vis_l * g)) ** 0.5  # H3.1 2.1 (2)
         Fr05 = (m_dot ** 2 * self.q ** 2 / (g * d * self.rho_l * self.rho_v)) ** 0.5  # H3.1 2.1 (3)
         xiL = 0.3164 / self.reynolds_l(m_dot, d) ** 0.25  # H3.1 2.1 (7)
         FrEu05 = (xiL * m_dot ** 2 * (1 - self.q) ** 2 / (2 * d * self.rho_l \
@@ -648,7 +651,7 @@ class PointND:
             elif (1 / a) > 0.4:
                 K2 = (1 - (2.97 / (1 / a) ** (2 / 3) + 1) / (6 * (1.83 / \
                                                                   (1 / a) ** (2 / 3) + 1) * (
-                                                                         3.43 / (1 / a) ** (2 / 3) + 1))) ** (-1)
+                                                                     3.43 / (1 / a) ** (2 / 3) + 1))) ** (-1)
 
             def find_xi(xi, d, Re_zp):
                 rest = -2 * np.log10(Rz / d / 3.7) + 2.51 / (Re_zp * xi ** 0.5) - 1 / xi ** 0.5
