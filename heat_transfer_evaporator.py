@@ -46,16 +46,6 @@ class PointND:
         self.cp_v = CP.PropsSI('CP0MASS', 'T', T, 'Q', 1, fluid)
         self.cp_l = CP.PropsSI('CP0MASS', 'T', T, 'Q', 0, fluid)
 
-    def Reynolds(self, m_dot: float, d: float) -> float:
-        """
-        Reynoldsnumber for real flow in not two-phase regime
-        :param m_dot: mass flow rate per area, kg/s/m**2
-        :param d: diameter, m
-        :return: Reynolds number, [-]
-        """
-        Re = m_dot * d / self.dyn_vis
-        return Re
-
     def Reynolds_v(self, m_dot, d):
         """
         Reynoldsnumber  in vapour state
