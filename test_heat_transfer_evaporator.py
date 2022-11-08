@@ -2,13 +2,41 @@ from heat_transfer_evaporator import PointND
 import CoolProp.CoolProp as CP
 import pytest
 
-@pytest.fixture
-def point_test():
-    m_dot = 200
-    d = 12e-3
-    return PointND(T = 300, q = 2e5, "Pentane", "testcase"),m_dot,d
 
-def test_Reynolds(point_test, m_dot, d):
-    point_test.Reynolds(m_dot, d)
-    test_dyn_vis = CP.PropsSI("")
+@pytest.fixture
+def m_dot():
+    return 200
+
+
+@pytest.fixture
+def d():
+    return 12e-3
+
+
+@pytest.fixture
+def T():
+    return 300
+
+
+@pytest.fixture
+def q():
+    return 0.4
+
+
+@pytest.fixture
+def fluid():
+    return "n-Butane"
+
+
+@pytest.fixture
+def point_test(m_dot, d, T, q, fluid):
+    return PointND(T, q, fluid, "testcase")
+
+
+def test_reynolds_l(point_test, m_dot, d, T, q, fluid):
+    re_l_script = point_test.Reynolds_l(m_dot, d)
+    test_dyn_vis_l = CP.PropsSI('V', 'T', T, 'Q', 0, fluid)
+    re_l_test = m_dot * (1 - q) * d / test_dyn_vis_l
+    assert re_l_test == re_l_script
+
 
