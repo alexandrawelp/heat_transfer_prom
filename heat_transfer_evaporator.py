@@ -3,7 +3,6 @@
 Created on Fri Sep  9 09:30:19 2022
 
 definition of class to calculate heat transfer in two-phase region
-
 @author: welp
 """
 
@@ -16,7 +15,7 @@ from scipy.optimize import root
 
 
 class PointND:
-    def __init__(self, T, q, fluid, name):
+    def __init__(self, T: float, q: float, fluid: str, name: str):
         self.T = T
         self.q = q
         self.fluid = fluid
@@ -34,7 +33,7 @@ class PointND:
         self.rho_l = CP.PropsSI('D', 'T', T, 'Q', 0, fluid)
         self.h_v = CP.PropsSI('H', 'T', T, 'Q', 1, fluid)
         self.h_l = CP.PropsSI('H', 'T', T, 'Q', 0, fluid)
-        self.h_verdampf = self.h_v - self.h_l
+        self.h_evap = self.h_v - self.h_l
         self.dyn_vis_v = CP.PropsSI('V', 'T', T, 'Q', 1, fluid)
         self.dyn_vis_l = CP.PropsSI('V', 'T', T, 'Q', 0, fluid)
         self.kin_vis_v = self.dyn_vis_v / self.rho_v
@@ -47,22 +46,12 @@ class PointND:
         self.cp_v = CP.PropsSI('CP0MASS', 'T', T, 'Q', 1, fluid)
         self.cp_l = CP.PropsSI('CP0MASS', 'T', T, 'Q', 0, fluid)
 
-    def Reynolds(self, m_dot, d):
+    def Reynolds(self, m_dot: float, d: float) -> float:
         """
-        Reynoldsnumber for real flow
-
-        Parameters
-        ----------
-        m_dot : TYPE flaot.
-            DESCRIPTION. mass flow rate per area [kg/s/m**2]
-        d : TYPE float.
-            DESCRIPTION. diameter [m]
-
-        Returns
-        -------
-        Re : TYPE float.
-            DESCRIPTION. Reynoldsnumber [-]
-
+        Reynoldsnumber for real flow in not two-phase regime
+        :param m_dot: mass flow rate per area, kg/s/m**2
+        :param d: diameter, m
+        :return: Reynolds number, [-]
         """
         Re = m_dot * d / self.dyn_vis
         return Re
@@ -363,7 +352,7 @@ class PointND:
                                          0)  # lokale einphasige Wärmeübergangskoeffizient an der Stelle z=0 für Flüssigkeit
         print(f"alpha_LO_start: {alpha_LO_start}")
 
-        q_dot_onb = 2 * self.sigma * self.T * alpha_LO_start / (r_cr * self.rho_v * self.h_verdampf)
+        q_dot_onb = 2 * self.sigma * self.T * alpha_LO_start / (r_cr * self.rho_v * self.h_evap)
         # print("q_onb: ", q_dot_onb)
 
         # q_dot_m = m_dot1 * h_v / (np.pi * d * l)
@@ -414,8 +403,8 @@ class PointND:
             T_tem = CP.PropsSI('T', 'P', p_tem, 'Q', self.q, self.fluid)
             point_tem = PointND(T_tem, self.q, self.fluid, 'Hilfspunkt für p_stern_tem = 0.1')
 
-            q_dot_kr = 0.144 * point_tem.h_verdampf * ((point_tem.rho_l \
-                                                        - point_tem.rho_v) * point_tem.rho_v) ** 0.5 \
+            q_dot_kr = 0.144 * point_tem.h_evap * ((point_tem.rho_l \
+                                                    - point_tem.rho_v) * point_tem.rho_v) ** 0.5 \
                        * ((g * point_tem.sigma) / point_tem.rho_l) ** 0.25 \
                        * point_tem.pr_l ** (-0.245)  #TODO: which pradtl number has to be used here?
 
@@ -804,8 +793,8 @@ class PointND:
             DESCRIPTION. length [m]
 
         """
-        print(f"deltax: {deltax}, hv: {self.h_verdampf}, q_dot: {q_dot}")
-        l = m_dot * np.pi * 0.25 * d ** 2 * deltax * self.h_verdampf / (q_dot * np.pi * d)
+        print(f"deltax: {deltax}, hv: {self.h_evap}, q_dot: {q_dot}")
+        l = m_dot * np.pi * 0.25 * d ** 2 * deltax * self.h_evap / (q_dot * np.pi * d)
         return l
 
 
