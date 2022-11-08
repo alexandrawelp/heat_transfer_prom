@@ -46,126 +46,64 @@ class PointND:
         self.cp_v = CP.PropsSI('CP0MASS', 'T', T, 'Q', 1, fluid)
         self.cp_l = CP.PropsSI('CP0MASS', 'T', T, 'Q', 0, fluid)
 
-    def Reynolds_v(self, m_dot, d):
+    def reynolds_v(self, m_dot: float, d: float) -> float:
         """
-        Reynoldsnumber  in vapour state
-
-        Parameters
-        ----------
-        m_dot : TYPE float.
-            DESCRIPTION. mass flow rate per area [kg/s/m**2]
-        d : TYPE float.
-            DESCRIPTION. diameter [m]
-
-        Returns
-        -------
-        Re_v : TYPE float.
-            DESCRIPTION. Reynoldsnumber in vapour state
-
+        Reynolds number in vapour state
+        :param m_dot: mass flow rate per area [kg/s/m**2]
+        :param d: diameter [m]
+        :return: Reynolds number in vapour state
         """
         Re_v = m_dot * self.q * d / self.dyn_vis_v  # H3.1 2.2 (11)
         return Re_v
 
-    def Reynolds_l(self, m_dot, d):
+    def reynolds_l(self, m_dot: float, d: float) -> float:
         """
-        Reynoldsnumber  in liquid state
-
-        Parameters
-        ----------
-        m_dot : TYPE float.
-            DESCRIPTION. mass flow rate per area [kg/s/m**2]
-        d : TYPE float.
-            DESCRIPTION. diameter [m]
-
-        Returns
-        -------
-        Re_l : TYPE float.
-            DESCRIPTION. Reynoldsnumber in liquid state
-
+        Reynolds number in liquid state
+        :param m_dot: mass flow rate per area [kg/s/m**2]
+        :param d: diameter [m]
+        :return: Reynolds number in liquid state
         """
+        re_l = m_dot * (1 - self.q) * d / self.dyn_vis_l  # H3.1 2.1 (6)
+        return re_l
 
-        Re_l = m_dot * (1 - self.q) * d / self.dyn_vis_l  # H3.1 2.1 (6)
-        return Re_l
-
-    def u_rohr(self, m_dot):
+    def u_rohr(self, m_dot: float) -> float:
         """
         velocity in tube
-
-        Parameters
-        ----------
-        m_dot : TYPE float.
-            DESCRIPTION. mass flow rate per area [kg/s/m**2]
-
-        Returns
-        -------
-        u : TYPE float.
-            DESCRIPTION. velocity in tube [m/s]
-
+        :param m_dot: mass flow rate per area [kg/s/m**2]
+        :return: velocity in tube [m/s]
         """
-
         u = m_dot / self.rho
         return u
 
-    def Froude(self, m_dot, d):
+    def froude(self, m_dot: float, d: float) -> float:
         """
         Froude number
-
-        Parameters
-        ----------
-        m_dot : TYPE float. 
-            DESCRIPTION. mass flow rate per area [kg/s/m**2]
-        d : TYPE float.
-            DESCRIPTION. diameter [m]
-
-        Returns
-        -------
-        Fr : TYPE float.
-            DESCRIPTION. Froude number [-]
-
+        :param m_dot: mass flow rate per area [kg/s/m**2]
+        :param d: diameter [m]
+        :return: Froude number [-]
         """
-        Fr = m_dot ** 2 * self.q ** 2 / (self.rho_l * self.rho_v * g * d)
-        return Fr
+        fr = m_dot ** 2 * self.q ** 2 / (self.rho_l * self.rho_v * g * d)
+        return fr
 
-    def Froudel(self, m_dot, d):
+    def froude_l(self, m_dot: float, d: float) -> float:
         """
         Froude number in liquid state
-
-        Parameters
-        ----------
-        m_dot : TYPE float.
-            DESCRIPTION. overall mass flow rate per area [kg/s/m**2]
-        d : TYPE float.
-            DESCRIPTION. diameter [m]
-
-        Returns
-        -------
-        Fr : TYPE float.
-            DESCRIPTION. Froude number for liquid state [-]
-
+        :param m_dot: overall mass flow rate per area [kg/s/m**2]
+        :param d: diameter [m]
+        :return: Froude number for liquid state [-]
         """
-        Fr = m_dot ** 2 * (1 - self.q) ** 2 / (self.rho_l ** 2 * g * d)
-        return Fr
+        fr_l = m_dot ** 2 * (1 - self.q) ** 2 / (self.rho_l ** 2 * g * d)
+        return fr_l
 
-    def Froudev(self, m_dot, d):
+    def froude_v(self, m_dot: float, d: float) -> float:
         """
         Froude number in vapour state
-
-        Parameters
-        ----------
-        m_dot : TYPE float.
-            DESCRIPTION. overall mass flow rate per area [kg/s/m^2]
-        d : TYPE float.
-            DESCRIPTION. diameter [m]
-
-        Returns
-        -------
-        Fr : TYPE float.
-            DESCRIPTION. Froude number for vapour state [-]
-
+        :param m_dot: overall mass flow rate per area [kg/s/m^2]
+        :param d: diameter [m]
+        :return: Froude number for vapour state [-]
         """
-
-        Fr = m_dot ** 2 * self.q ** 2 / (self.rho_v ** 2 * g * d)
-        return Fr
+        fr_v = m_dot ** 2 * self.q ** 2 / (self.rho_v ** 2 * g * d)
+        return fr_v
 
     def alpha_1P_l(self, m_dot, d, z_i):
         """
@@ -499,7 +437,7 @@ class PointND:
                                                              * (
                                                                          self.rho_l - self.rho_v) * self.dyn_vis_l * g)) ** 0.5  # H3.1 2.1 (2)
         Fr05 = (m_dot ** 2 * self.q ** 2 / (g * d * self.rho_l * self.rho_v)) ** 0.5  # H3.1 2.1 (3)
-        xiL = 0.3164 / self.Reynolds_l(m_dot, d) ** 0.25  # H3.1 2.1 (7)
+        xiL = 0.3164 / self.reynolds_l(m_dot, d) ** 0.25  # H3.1 2.1 (7)
         FrEu05 = (xiL * m_dot ** 2 * (1 - self.q) ** 2 / (2 * d * self.rho_l \
                                                           * (self.rho_l - self.rho_v) * g)) ** 0.5  # H3.1 2.1 (4)
         WeFrL = g * d ** 2 * self.rho_l / self.sigma  # H3.1 2.1 (5)
@@ -677,10 +615,10 @@ class PointND:
             zustand = 'Wellenströmung'
         elif FrEu05 ** 2 >= self.blasenstroemung(fG, fL, Ui):
             zustand = 'Blasenströmung'
-        elif X >= 0.36 and self.Reynolds_l(m_dot, d) >= 1187 and self.Reynolds_v(m_dot, d) >= 1187:
+        elif X >= 0.36 and self.reynolds_l(m_dot, d) >= 1187 and self.reynolds_v(m_dot, d) >= 1187:
             if Fr05 ** 2 > self.wellenstroemung(fG, hl, WeFrL):
                 zustand = 'Pfropfenströmung'
-        elif X >= 0.51 and self.Reynolds_l(m_dot, d) <= 1187 and self.Reynolds_v(m_dot, d) >= 1187:
+        elif X >= 0.51 and self.reynolds_l(m_dot, d) <= 1187 and self.reynolds_v(m_dot, d) >= 1187:
             if Fr05 ** 2 > self.wellenstroemung(fG, hl, WeFrL):
                 zustand = 'Pfropfenströmung'
         elif X < 0.51 and Fr05 ** 2 >= self.nebelstroemung(fL, fG, WeFrL):
@@ -701,7 +639,7 @@ class PointND:
         # dispersed or continuous?
 
         a = self.q * self.rho_l / ((1 - self.q) * self.rho_v)
-        Fr = self.Froude(m_dot, d)
+        Fr = self.froude(m_dot, d)
         if a <= 12 * Fr ** 0.5 / (1 + Fr ** 0.5 / 7):
             # dispersed
             Re_zp = m_dot * d / (self.dyn_vis * (1 - self.q(1 - self.dyn_vis_v / self.dyn_vis_l)))
@@ -724,8 +662,8 @@ class PointND:
 
             # continuous
             Re_G = self.Reynolds(m_dot, d)
-            ReL = self.Reynolds_l(m_dot, d)
-            FrL = self.Froudel(m_dot, d)
+            ReL = self.reynolds_l(m_dot, d)
+            FrL = self.froude_l(m_dot, d)
 
             if Re_G > 2300:
 

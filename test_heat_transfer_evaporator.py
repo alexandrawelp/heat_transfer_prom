@@ -34,13 +34,14 @@ def point_test(m_dot, d, T, q, fluid):
 
 
 def test_reynolds_l(point_test, m_dot, d, T, q, fluid):
-    re_l_script = point_test.Reynolds_l(m_dot, d)
+    re_l_script = point_test.reynolds_l(m_dot, d)
     test_dyn_vis_l = CP.PropsSI('V', 'T', T, 'Q', 0, fluid)
     re_l_test = m_dot * (1 - q) * d / test_dyn_vis_l
     assert re_l_test == re_l_script
 
+
 def test_reynolds_v(point_test, m_dot, d, T, q, fluid):
-    re_v_script = point_test.Reynolds_v(m_dot, d)
+    re_v_script = point_test.reynolds_v(m_dot, d)
     test_dyn_vis_v = CP.PropsSI('V', 'T', T, 'Q', 1, fluid)
     re_v_test = m_dot * q * d / test_dyn_vis_v
     assert re_v_test == re_v_script
