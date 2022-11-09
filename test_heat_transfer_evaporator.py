@@ -1,7 +1,15 @@
+# Testcase for heat transfer calculation evaporator
+"""
+created on 08.11.2022 by Alexandra Welp
+Testcase for heat transfer coefficient testing
+@ author: welp
+"""
+
 from heat_transfer_evaporator import PointND
 import CoolProp.CoolProp as CP
 import pytest
 import numpy as np
+from unittest.mock import Mock
 
 
 @pytest.fixture
