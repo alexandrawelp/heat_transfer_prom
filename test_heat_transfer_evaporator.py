@@ -39,7 +39,7 @@ def fluid():
 
 @pytest.fixture
 def point_test(m_dot, d, T, q, fluid):
-    return PointND(T, q, fluid, "testcase")
+    return PointND('TQ', T, q, fluid, "testcase")
 
 
 def test_reynolds_l(point_test, m_dot, d, T, q, fluid):
@@ -54,6 +54,11 @@ def test_reynolds_v(point_test, m_dot, d, T, q, fluid):
     test_dyn_vis_v = CP.PropsSI('V', 'T', T, 'Q', 1, fluid)
     re_v_test = m_dot * q * d / test_dyn_vis_v
     assert re_v_test == re_v_script
+
+def test_init():
+    testpoint = PointND('PQ', 103.025, 0, [1.0], "Water", "testcase")
+    assert testpoint.T == pytest.approx(373.59, rel=1)
+    assert testpoint.h == pytest.approx(421.03, rel=1)
 
 def test_alpha_lo():
     # values from example 1 VDI heat atlas p. 931

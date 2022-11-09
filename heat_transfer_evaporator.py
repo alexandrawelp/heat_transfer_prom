@@ -7,6 +7,11 @@ definition of class to calculate heat transfer in two-phase region
 """
 
 import CoolProp.CoolProp as CP
+from ctREFPROP.ctREFPROP import REFPROPFunctionLibrary
+import os
+RP = REFPROPFunctionLibrary(os.environ['RPPREFIX'])
+RP.SETPATHdll(os.environ['RPPREFIX'])
+MOLAR_BASE_SI = RP.GETENUMdll(0, "MOLAR BASE SI").iEnum
 import numpy as np
 import sys
 import pandas as pd
@@ -27,17 +32,21 @@ class BoundaryConditions:
 
 
 class PointND(BoundaryConditions):
-    def __init__(self, T: float, q: float, fluid: str, name: str):
+    def __init__(self, ab: str, a: float, b: float, z: float, fluid: str, name: str):
         BoundaryConditions.__init__(self)
-        self.T = T
-        self.q = q
+        RP.SETFLUIDSdll(fluid)
+        properties = RP.ABFLSHdll(ab, a, b, z, int("031"))
+        self.T = properties.T
+        self.q = properties.q
         self.fluid = fluid
         self.name = name
-        self.rho = CP.PropsSI('D', 'T', T, 'Q', q, fluid)
-        self.h = CP.PropsSI('H', 'T', T, 'Q', q, fluid)
-        self.p = CP.PropsSI('P', 'T', T, 'Q', q, fluid)
+        self.rho = properties.D
+        self.h = properties.h
+        self.p = properties.P
         self.pcrit = CP.PropsSI('Pcrit', fluid)
         self.M = CP.PropsSI('molarmass', fluid)
+        T = properties.T
+        q = properties.q
         self.sigma = CP.PropsSI('surface_tension', 'T', T, 'Q', q, fluid)
 
         # saturation properties

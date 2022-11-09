@@ -27,7 +27,7 @@ RP.SETPATHdll(os.environ['RPPREFIX'])
 
 # Get the unit system we want to use (we will revisit this GETENUM function later)
 MOLAR_BASE_SI = RP.GETENUMdll(0, "MOLAR BASE SI").iEnum
-print(RP.RPVersion())
+
 
 # first example
 p_Pa = 101.325
@@ -42,9 +42,10 @@ print(l)
 
 def fluid_properties_2p(ab: str, a: float, b: float, z: float, fluid: str):
     RP.SETFLUIDSdll(fluid)
-    r = RP.ABFLSHdll(ab, a, b, z, iFlags=030)
-    T, p, d, d_l, d_v, q, u, h, s, cv, cp = r[0:11]
+    properties = RP.ABFLSHdll(ab, a, b, z, iFlags=030)
+    properties_l = RP.ABFLSHdll(ab, a, b, z, iFlags=030)
+    properties_v = RP.ABFLSHdll(ab, a, b, z, iFlags=030)
 
 
 
-fluid_properties("PQ", p_Pa, Q, [1.0],'water')
+fluid_properties_nd("PQ", p_Pa, Q, [1.0],'water')
