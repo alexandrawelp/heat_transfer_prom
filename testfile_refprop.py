@@ -1,3 +1,13 @@
+"""
+first link of refprop for python.
+Documentation available: https://refprop-docs.readthedocs.io/en/latest/DLL/high_level.html#f/_/SETPATHdll
+Tutorial: https://nbviewer.org/github/usnistgov/REFPROP-wrappers/blob/master/wrappers/python/notebooks/Tutorial.ipynb
+(set-up extracted from the latter)
+
+author: Alexandra Welp
+"""
+
+
 # Import the main class from the Python library
 from ctREFPROP.ctREFPROP import REFPROPFunctionLibrary
 import os
@@ -28,24 +38,18 @@ RP.SETPATHdll(os.environ['RPPREFIX'])
 # Get the unit system we want to use (we will revisit this GETENUM function later)
 MOLAR_BASE_SI = RP.GETENUMdll(0, "MOLAR BASE SI").iEnum
 
-
 # first example
+# input of variables used for later property call
 p_Pa = 101.325
 Q = 0
-FLDpath = os.path.join(os.environ['RPPREFIX'],"FLUIDS","WATER.FLD")
-r = RP.REFPROPdll(FLDpath,"PQ","T",MOLAR_BASE_SI,0,0,p_Pa,Q,[1.0])
-print(r.Output[0])
-RP.SETFLUIDSdll("Water");
-l = RP.ABFLSHdll("PQ", p_Pa, Q, [1.0], 000)
+
+# Setup fluid/fluid mixture
+RP.SETFLUIDSdll("Water")
+
+# Example for 2 different functions that can be used in 2 phase region
+l = RP.ABFLSHdll("PQ", p_Pa, Q, [1.0], 000) # faster, easier but limited properties available
 print(l)
 
+r = RP.REFPROPdll("","PQ","T;D;h",MOLAR_BASE_SI,0,0,p_Pa*10**3,Q,[1.0]).Output[0:3] # slower, complicated, but huge amount of properties
+print(r)
 
-def fluid_properties_2p(ab: str, a: float, b: float, z: float, fluid: str):
-    RP.SETFLUIDSdll(fluid)
-    properties = RP.ABFLSHdll(ab, a, b, z, iFlags=030)
-    properties_l = RP.ABFLSHdll(ab, a, b, z, iFlags=030)
-    properties_v = RP.ABFLSHdll(ab, a, b, z, iFlags=030)
-
-
-
-fluid_properties_nd("PQ", p_Pa, Q, [1.0],'water')

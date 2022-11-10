@@ -10,7 +10,7 @@ import CoolProp.CoolProp as CP
 from ctREFPROP.ctREFPROP import REFPROPFunctionLibrary
 import os
 RP = REFPROPFunctionLibrary(os.environ['RPPREFIX'])
-#RP.SETPATHdll(os.environ['RPPREFIX'])
+RP.SETPATHdll(os.environ['RPPREFIX'])
 #MOLAR_BASE_SI = RP.GETENUMdll(0, "MOLAR BASE SI").iEnum
 import numpy as np
 import sys
