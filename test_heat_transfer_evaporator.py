@@ -56,9 +56,23 @@ def test_reynolds_v(point_test, m_dot, d, T, q, fluid):
     assert re_v_test == re_v_script
 
 def test_init():
-    testpoint = PointND('PQ', 103.025, 0, [1.0], "Water", "testcase")
-    assert testpoint.T == pytest.approx(373.59, rel=1)
-    assert testpoint.h == pytest.approx(421.03, rel=1)
+    testpoint = PointND('PQ', 2000, 0.2, [1.0], "Propane", "testcase")
+    assert testpoint.T == pytest.approx(387.52, rel=1)
+    assert testpoint.h == pytest.approx(554.03, rel=1)
+    assert testpoint.h_v == pytest.approx(735.98e3,rel=1)
+    assert testpoint.h_l == pytest.approx(508.54e3,rel=1)
+    assert testpoint.rho == pytest.approx(181.71,rel=1)
+    assert testpoint.rho_v == pytest.approx(54.354,rel=1)
+    assert testpoint.rho_l == pytest.approx(438.66,rel=1)
+    assert testpoint.cp_l == pytest.approx(3387.1,rel=1)
+    assert testpoint.cp_v == pytest.approx(2981.5,rel=1)
+    assert testpoint.c_v == pytest.approx(168.1, rel=1)
+    assert testpoint.lam_v == pytest.approx(30.824e-3, rel=1)
+    assert testpoint.lam_l == pytest.approx(74.056e-3, rel=1)
+    assert testpoint.pr_v == pytest.approx(1.0052, rel=1)
+    assert testpoint.pr_l == pytest.approx(3.477,rel=1)
+    assert testpoint.sigma == pytest.approx(2.7377e-3, rel=1)
+
 
 def test_alpha_lo():
     # values from example 1 VDI heat atlas p. 931

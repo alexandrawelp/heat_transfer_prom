@@ -46,36 +46,30 @@ class PointND(BoundaryConditions):
         self.q = properties.q
         self.h = properties.h
 
-
-        T = properties.T
-        q = properties.q
-
-
         # saturation properties
         # v : vapour, l : liquid
 
-        properties_l = RP.REFPROPdll("water", str(ab[0]+'Q'), "MM;PC;STN;VIS;TCX;PRANDTL;CP;h",
-                                           RP.MOLAR_BASE_SI, 1, 0, a, 0, z).Output[0:8]
-
-        properties_v = RP.REFPROPdll("water", str(ab[0] + 'Q'), "VIS; TCX; PRANDTL; W; CP;h",
-                                     RP.MOLAR_BASE_SI, 1, 0, a, 1, z).Output[0:6]
-        self.pcrit = properties_l[2]
-        self.M = properties_l[1]
+        properties_l = RP.REFPROPdll("butane", str(ab[0] + 'Q'), "MM;PC;STN;VIS;TCX;PRANDTL;CP;h",
+                                           RP.MASS_BASE_SI, 1, 0, a*10**3, 0, z).Output[0:8]
+        properties_v = RP.REFPROPdll("butane", str(ab[0] + 'Q'), "VIS;TCX;PRANDTL;W;CP;h",
+                                     RP.MASS_BASE_SI, 1, 0, a*10**3, 1, z).Output[0:6]
+        self.pcrit = properties_l[1]
+        self.M = properties_l[0]
         self.h_v = properties_v[5]
         self.h_l = properties_l[7]
         self.h_evap = self.h_v - self.h_l
-        self.dyn_vis_v = properties_v[1]
-        self.dyn_vis_l = properties_l[4]
+        self.dyn_vis_v = properties_v[0]
+        self.dyn_vis_l = properties_l[3]
         self.kin_vis_v = self.dyn_vis_v / self.rho_v
         self.kin_vis_l = self.dyn_vis_l / self.rho_l
-        self.lam_l = properties_l[5]
-        self.lam_v = properties_v[2]
-        self.pr_l = properties_l[6]
-        self.pr_v = properties_v[3]
-        self.c_v = properties_v[4]
-        self.cp_v = properties_v[5]
-        self.cp_l = properties_l[7]
-        self.sigma = properties_l[3]
+        self.lam_l = properties_l[4]
+        self.lam_v = properties_v[1]
+        self.pr_l = properties_l[5]
+        self.pr_v = properties_v[2]
+        self.c_v = properties_v[3]
+        self.cp_v = properties_v[4]
+        self.cp_l = properties_l[6]
+        self.sigma = properties_l[2]
 
     def reynolds_v(self, m_dot: float, d: float) -> float:
         """
