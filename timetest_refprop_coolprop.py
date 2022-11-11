@@ -37,7 +37,15 @@ def get_properties_direct_refprop(P, q, fluid):
     rho = l.D
     return T, h, rho
 
-i = np.linspace(0,1,100000)
+def get_properties_direct_refprop_dll(P, q, fluid):
+    l = RP.REFPROPdll(fluid, 'PQ', "T;H;D",
+                                 RP.MASS_BASE_SI, 1, 0, P, q, [1.0]).Output[0:3]
+    T = l[0]
+    h = l[1]
+    rho = l[2]
+    return T, h, rho
+
+i = np.linspace(0,1,10000)
 fluid = "Water"
 
 print("call low level")
@@ -61,7 +69,14 @@ for q in i:
 endtime_refprop = time.time()
 runtime_refprop = endtime_refprop - starttime_refprop
 
+print("call direct refprop dll")
+starttime_refprop_dll = time.time()
+for q in i:
+    get_properties_direct_refprop_dll(101325, q, fluid)
+endtime_refprop_dll = time.time()
+runtime_refprop_dll = endtime_refprop_dll - starttime_refprop_dll
+
 print(f"Laufzeit low level {runtime_low_level}s")
 print(f"Laufzeit high level {runtime_high_level}s")
 print(f"Laufzeit RefProp {runtime_refprop}s")
-
+print(f"Laufzeit Refprop dll {runtime_refprop_dll}s")
