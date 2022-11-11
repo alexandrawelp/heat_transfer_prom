@@ -56,9 +56,9 @@ def test_reynolds_v(point_test, m_dot, d, T, q, fluid):
     assert re_v_test == re_v_script
 
 def test_init():
-    testpoint = PointND('PQ', 2000, 0.2, [1.0], "Propane", "testcase")
+    testpoint = PointND(387.52, 0.2, "Butane", "testcase")
     assert testpoint.T == pytest.approx(387.52, rel=1)
-    assert testpoint.h == pytest.approx(554.03, rel=1)
+    assert testpoint.h == pytest.approx(554.03e3, rel=1)
     assert testpoint.h_v == pytest.approx(735.98e3,rel=1)
     assert testpoint.h_l == pytest.approx(508.54e3,rel=1)
     assert testpoint.rho == pytest.approx(181.71,rel=1)

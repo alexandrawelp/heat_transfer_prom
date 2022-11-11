@@ -32,44 +32,38 @@ class BoundaryConditions:
 
 
 class PointND(BoundaryConditions):
-    def __init__(self, ab: str, a: float, b: float, z: float, fluid: str, name: str):
+    def __init__(self, T: float, q: float, fluid: str, name: str):
         BoundaryConditions.__init__(self)
         self.fluid = fluid
+        self.T = T
+        self.q = q
+        fluid = 'REFPROP::' + fluid
         self.name = name
-        RP.SETFLUIDSdll(fluid)
-        properties = RP.ABFLSHdll(ab, a, b, z, int("031"))
-        self.T = properties.T
-        self.p = properties.P
-        self.rho = properties.D
-        self.rho_l = properties.Dl
-        self.rho_v = properties.Dv
-        self.q = properties.q
-        self.h = properties.h
+        self.rho = CP.PropsSI('D', 'T', T, 'Q', q, fluid)
+        self.h = CP.PropsSI('H', 'T', T, 'Q', q, fluid)
+        self.p = CP.PropsSI('P', 'T', T, 'Q', q, fluid)
+        self.pcrit = CP.PropsSI('Pcrit', fluid)
+        self.M = CP.PropsSI('molarmass', fluid)
+        self.sigma = CP.PropsSI('surface_tension', 'T', T, 'Q', q, fluid)
 
         # saturation properties
         # v : vapour, l : liquid
-
-        properties_l = RP.REFPROPdll("butane", str(ab[0] + 'Q'), "MM;PC;STN;VIS;TCX;PRANDTL;CP;h",
-                                           RP.MASS_BASE_SI, 1, 0, a*10**3, 0, z).Output[0:8]
-        properties_v = RP.REFPROPdll("butane", str(ab[0] + 'Q'), "VIS;TCX;PRANDTL;W;CP;h",
-                                     RP.MASS_BASE_SI, 1, 0, a*10**3, 1, z).Output[0:6]
-        self.pcrit = properties_l[1]
-        self.M = properties_l[0]
-        self.h_v = properties_v[5]
-        self.h_l = properties_l[7]
+        self.rho_v = CP.PropsSI('D', 'T', T, 'Q', 1, fluid)
+        self.rho_l = CP.PropsSI('D', 'T', T, 'Q', 0, fluid)
+        self.h_v = CP.PropsSI('H', 'T', T, 'Q', 1, fluid)
+        self.h_l = CP.PropsSI('H', 'T', T, 'Q', 0, fluid)
         self.h_evap = self.h_v - self.h_l
-        self.dyn_vis_v = properties_v[0]
-        self.dyn_vis_l = properties_l[3]
+        self.dyn_vis_v = CP.PropsSI('V', 'T', T, 'Q', 1, fluid)
+        self.dyn_vis_l = CP.PropsSI('V', 'T', T, 'Q', 0, fluid)
         self.kin_vis_v = self.dyn_vis_v / self.rho_v
         self.kin_vis_l = self.dyn_vis_l / self.rho_l
-        self.lam_l = properties_l[4]
-        self.lam_v = properties_v[1]
-        self.pr_l = properties_l[5]
-        self.pr_v = properties_v[2]
-        self.c_v = properties_v[3]
-        self.cp_v = properties_v[4]
-        self.cp_l = properties_l[6]
-        self.sigma = properties_l[2]
+        self.lam_l = CP.PropsSI('L', 'T', T, 'Q', 0, fluid)
+        self.lam_v = CP.PropsSI('L', 'T', T, 'Q', 1, fluid)
+        self.pr_l = CP.PropsSI('Prandtl', 'T', T, 'Q', 0, fluid)
+        self.pr_v = CP.PropsSI('Prandtl', 'T', T, 'Q', 1, fluid)
+        self.c_v = CP.PropsSI('SPEED_OF_SOUND', 'T', T, 'Q', 1, fluid)
+        self.cp_v = CP.PropsSI('CP0MASS', 'T', T, 'Q', 1, fluid)
+        self.cp_l = CP.PropsSI('CP0MASS', 'T', T, 'Q', 0, fluid)
 
     def reynolds_v(self, m_dot: float, d: float) -> float:
         """
