@@ -7,6 +7,11 @@ definition of class to calculate heat transfer in two-phase region
 """
 
 import CoolProp.CoolProp as CP
+from ctREFPROP.ctREFPROP import REFPROPFunctionLibrary
+import os
+RP = REFPROPFunctionLibrary(os.environ['RPPREFIX'])
+RP.SETPATHdll(os.environ['RPPREFIX'])
+#MOLAR_BASE_SI = RP.GETENUMdll(0, "MOLAR BASE SI").iEnum
 import numpy as np
 import sys
 import pandas as pd
@@ -14,11 +19,25 @@ import matplotlib.pyplot as plt
 from scipy.optimize import root
 
 
-class PointND:
+class BoundaryConditions:
+    def __init__(self):
+        self.Ra = 1.5e-6
+        self.q_dot = 9000
+        self.inlet_flow = 'true'
+        self.RB = 'qzu'
+        self.Rz = 7 * self.Ra
+        self.g = 9.81
+        self.lam_w = 320
+        self.s = 2e-3
+
+
+class PointND(BoundaryConditions):
     def __init__(self, T: float, q: float, fluid: str, name: str):
+        BoundaryConditions.__init__(self)
+        self.fluid = fluid
         self.T = T
         self.q = q
-        self.fluid = fluid
+        fluid = 'REFPROP::' + fluid
         self.name = name
         self.rho = CP.PropsSI('D', 'T', T, 'Q', q, fluid)
         self.h = CP.PropsSI('H', 'T', T, 'Q', q, fluid)
@@ -129,26 +148,26 @@ class PointND:
         if re_l0 < 5 * 10 ** 4:
 
             if RB == 'Tw':
-                if inlet_flow == 'true':
+                if self.inlet_flow == 'true':
                     nu_x_lam = 0.332 * self.pr_l ** (1 / 3) * (re_l0 * dz) ** (1 / 2)
-                if inlet_flow == 'false':
+                if self.inlet_flow == 'false':
                     nu_x_lam = (3.66 ** 3 + 1.077 ** 3 * re_l0 * self.pr_l * dz) ** (1 / 3)
 
             if RB == 'qzu':
-                if inlet_flow == 'true':
+                if self.inlet_flow == 'true':
                     nu_x_lam = 0.455 * self.pr_l ** (1 / 3) * (re_l0 * dz) ** 0.5
-                if inlet_flow == 'false':
+                if self.inlet_flow == 'false':
                     nu_x_lam = (4.36 ** 3 + 1.302 ** 3 * re_l0 * self.pr_l * dz) ** (1 / 3)
 
         # turbulent case:
         nu_x_turb = 0
         if re_l0 >= 2300:
-            if inlet_flow == 'true':
+            if self.inlet_flow == 'true':
                 if d / z_i >= 1:
                     nu_x_turb = 4 / 3 * nu_inf
                 else:
                     nu_x_turb = nu_inf * (1 + 1 / 3 * dz ** (2 / 3))
-            if inlet_flow == 'false':
+            if self.inlet_flow == 'false':
                 nu_x_turb = nu_inf
 
         if nu_x_turb > nu_x_lam:
@@ -266,6 +285,7 @@ class PointND:
         alpha = Nu_x * self.lam_v / d
         print(f"alpha_Gas: {alpha}")
         return alpha
+
     # TODO: create testcases, then merge three similar functions above, differ only in Re
     def alpha_sieden(self, m_dot, d, z_i):
         """
