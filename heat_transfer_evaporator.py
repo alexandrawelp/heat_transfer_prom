@@ -356,7 +356,7 @@ class PointND(BoundaryConditions):
 
             q_dot_kr = 0.144 * point_tem.h_evap * ((point_tem.rho_l \
                                                     - point_tem.rho_v) * point_tem.rho_v) ** 0.5 \
-                       * ((g * point_tem.sigma) / point_tem.rho_l) ** 0.25 \
+                       * ((self.g * point_tem.sigma) / point_tem.rho_l) ** 0.25 \
                        * point_tem.pr_l ** (-0.245)  # TODO: which pradtl number has to be used here?
 
             del (point_tem)
@@ -368,14 +368,14 @@ class PointND(BoundaryConditions):
             if p_stern < 0.1:
                 q_cr_PB = q_dot_kr * 1.2 * (p_stern ** 0.17 + p_stern ** 0.8)
 
-            alpha_b = alpha_0 * CF * (q_dot / q0) ** n \
+            alpha_b = alpha_0 * CF * (self.q_dot / q0) ** n \
                       * (2.692 * p_stern ** 0.43 + 1.6 * p_stern ** 6.5 / (1 - p_stern ** 4.4)) \
-                      * (1e-2 / d) ** 0.5 * (Ra / 1e-6) ** 0.133 * (m_dot / 100) ** 0.25 \
-                      * (1 - p_stern ** 0.1 * (q_dot / q_cr_PB) ** 0.3 * self.q)  # H3.4 2.2 (31)
+                      * (1e-2 / d) ** 0.5 * (self.Ra / 1e-6) ** 0.133 * (m_dot / 100) ** 0.25 \
+                      * (1 - p_stern ** 0.1 * (self.q_dot / q_cr_PB) ** 0.3 * self.q)  # H3.4 2.2 (31)
 
-            alpha_b_hzw = alpha_0 * CF * (q_dot / q0) ** n \
+            alpha_b_hzw = alpha_0 * CF * (self.q_dot / q0) ** n \
                           * (2.816 * p_stern ** 0.45 + (3.4 + 1.7 / (1 - p_stern ** 7)) * p_stern ** 3.7) \
-                          * (1e-2 / d) ** 0.4 * (Ra / 1e-6) * 0.133  # H3.4 2.1 (21)
+                          * (1e-2 / d) ** 0.4 * (self.Ra / 1e-6) * 0.133  # H3.4 2.1 (21)
 
             if alpha_b_hzw < alpha_b:
                 alpha_b = alpha_b_hzw
@@ -762,6 +762,7 @@ if __name__ == '__main__':
         alpha_complete.append(alpha)
         print("Strömungsform:", p1.flow_character(m_dot, d_i)[0], "\n")
 
+    print(f"alpha_complete: {alpha_complete}")
     plt.plot(x_var, alpha_complete[0], 'r.', label="Gesamt")
     plt.plot(x_var, alpha_complete[1], 'g.', label="blasen")
     plt.plot(x_var, alpha_complete[2], 'b.', label="konvektiv")
