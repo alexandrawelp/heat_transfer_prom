@@ -7,6 +7,7 @@ definition of class to calculate heat transfer in two-phase region
 """
 
 import CoolProp.CoolProp as CP
+import scipy
 from ctREFPROP.ctREFPROP import REFPROPFunctionLibrary
 import os
 RP = REFPROPFunctionLibrary(os.environ['RPPREFIX'])
@@ -147,13 +148,13 @@ class PointND(BoundaryConditions):
         nu_x_lam = 0
         if re_l0 < 5 * 10 ** 4:
 
-            if RB == 'Tw':
+            if self.RB == 'Tw':
                 if self.inlet_flow == 'true':
                     nu_x_lam = 0.332 * self.pr_l ** (1 / 3) * (re_l0 * dz) ** (1 / 2)
                 if self.inlet_flow == 'false':
                     nu_x_lam = (3.66 ** 3 + 1.077 ** 3 * re_l0 * self.pr_l * dz) ** (1 / 3)
 
-            if RB == 'qzu':
+            if self.RB == 'qzu':
                 if self.inlet_flow == 'true':
                     nu_x_lam = 0.455 * self.pr_l ** (1 / 3) * (re_l0 * dz) ** 0.5
                 if self.inlet_flow == 'false':
@@ -216,12 +217,12 @@ class PointND(BoundaryConditions):
         # turbulent case:
         nu_x_turb = 0
         if re_v0 >= 2300:
-            if inlet_flow == 'true':
+            if self.inlet_flow == 'true':
                 if d / z_i >= 1:
                     nu_x_turb = 4 / 3 * nu_inf
                 else:
                     nu_x_turb = nu_inf * (1 + 1 / 3 * dz ** (2 / 3))
-            if inlet_flow == 'false':
+            if self.inlet_flow == 'false':
                 nu_x_turb = nu_inf
 
         if nu_x_turb > nu_x_lam:
@@ -311,25 +312,24 @@ class PointND(BoundaryConditions):
 
         zustand, phi, eps = self.flow_character(m_dot, d)
 
-        if q_dot < q_dot_onb:
+        if self.q_dot < q_dot_onb:
             alpha_b = 0
         else:
             M_H2 = CP.PropsSI('molarmass', 'Hydrogen')
             p_stern = self.p / self.pcrit
             n = 0.9 - 0.36 * p_stern ** 0.13
             CF = 0.789 * (self.M / M_H2) ** 0.11
-            if (zustand == 'Wellenströmung' or zustand == 'Schichtenströmung') and (RB == 'Tw'):
-                CF = CF * 0.86 * lam_w * s
-            if RB == 'qzu' and (lam_w * s) < 0.7:
-                kappa = 0.675 + 0.325 * np.tanh(3.711 * (lam_w * s - 3.24e-2))  # H3.4 2.2 (33a)
+            if (zustand == 'Wellenströmung' or zustand == 'Schichtenströmung') and (self.RB == 'Tw'):
+                CF = CF * 0.86 * self.lam_w * self.s
+            if self.RB == 'qzu' and (self.lam_w * self.s) < 0.7:
+                kappa = 0.675 + 0.325 * np.tanh(3.711 * (self.lam_w * self.s - 3.24e-2))  # H3.4 2.2 (33a)
                 n = kappa * n  # H3.4 2.2 (34a)
                 if zustand == 'Wellenströmung' or zustand == 'Schichtenströmung':  # P: kleines psi
-                    p = 0.46 + 0.4 * np.tanh(3.387 * (lam_w * s - 8.62e-3))  # H3.4 2.2 (33b)
+                    p = 0.46 + 0.4 * np.tanh(3.387 * (self.lam_w * self.s - 8.62e-3))  # H3.4 2.2 (33b)
                 if zustand == 'Pfropfenströmung':
-                    p = 0.671 + 0.329 * np.tanh(3.691 * (lam_w * s - 8.42e-3))  # H3.4 2.2 (33c)
+                    p = 0.671 + 0.329 * np.tanh(3.691 * (self.lam_w * self.s - 8.42e-3))  # H3.4 2.2 (33c)
                 if zustand == 'Ringströmung':
-                    p = 0.755 + 0.245 * np.tanh(3.702 * (lam_w * s - 1.25e-2))  # H3.4 2.2 (33d)
-                print(f"psi: {p}")
+                    p = 0.755 + 0.245 * np.tanh(3.702 * (self.lam_w * self.s - 1.25e-2))  # H3.4 2.2 (33d)
                 CF = CF * p  # H3.4 2.2 (35)
 
             table2 = np.array(pd.read_excel("fluid_prop_VDI_Tab2.xlsx"))
@@ -457,13 +457,12 @@ class PointND(BoundaryConditions):
                 (self.rho_v / self.rho_l) ** 0.5 * (
                         self.dyn_vis_l / self.dyn_vis_v) ** 0.125  # Martinelli-Parameter, H3.1 2.1 (1)
         ReFr05 = (m_dot ** 3 * self.q ** 2 * (1 - self.q) / (self.rho_v \
-                                                             * (
-                                                                     self.rho_l - self.rho_v) * self.dyn_vis_l * g)) ** 0.5  # H3.1 2.1 (2)
-        Fr05 = (m_dot ** 2 * self.q ** 2 / (g * d * self.rho_l * self.rho_v)) ** 0.5  # H3.1 2.1 (3)
+                                                             * (self.rho_l - self.rho_v) * self.dyn_vis_l * self.g)) ** 0.5  # H3.1 2.1 (2)
+        Fr05 = (m_dot ** 2 * self.q ** 2 / (self.g * d * self.rho_l * self.rho_v)) ** 0.5  # H3.1 2.1 (3)
         xiL = 0.3164 / self.reynolds_l(m_dot, d) ** 0.25  # H3.1 2.1 (7)
         FrEu05 = (xiL * m_dot ** 2 * (1 - self.q) ** 2 / (2 * d * self.rho_l \
-                                                          * (self.rho_l - self.rho_v) * g)) ** 0.5  # H3.1 2.1 (4)
-        WeFrL = g * d ** 2 * self.rho_l / self.sigma  # H3.1 2.1 (5)
+                                                          * (self.rho_l - self.rho_v) * self.g)) ** 0.5  # H3.1 2.1 (4)
+        WeFrL = self.g * d ** 2 * self.rho_l / self.sigma  # H3.1 2.1 (5)
 
         return X, ReFr05, Fr05, FrEu05, WeFrL
 
@@ -485,7 +484,7 @@ class PointND(BoundaryConditions):
 
         eps = self.q / self.rho_v * ((1 + 0.12 * (1 - self.q)) \
                                      * (self.q / self.rho_v + (1 - self.q) / self.rho_l) \
-                                     + 1.18 * (1 - self.q) * (g * self.sigma * (self.rho_l - self.rho_v)) ** 0.25 \
+                                     + 1.18 * (1 - self.q) * (self.g * self.sigma * (self.rho_l - self.rho_v)) ** 0.25 \
                                      / (m_dot * self.rho_l ** 0.5)) ** (-1)  # H3.1 2.2 (26)
         return eps
 
@@ -627,7 +626,6 @@ class PointND(BoundaryConditions):
         if sol2.success != True:
             print("ERROR! Solver hl not converged")
         hl = sol2.x
-        h.append(hl)
 
         Ui, UL, UG, fL, fG = self.hl_values(hl)
 
@@ -750,68 +748,40 @@ class PointND(BoundaryConditions):
 
 
 if __name__ == '__main__':
-    d_i = 14e-3
-    Ra = 1.5e-6
-    T = 77.85 + 273.15
-    q_dot = 9000
+    d_i = 12e-3
+    T = 372
     m_dot = 0.01 / (0.25 * d_i ** 2 * np.pi)
-    fluid_name = 'R12'
-    global inlet_flow
-    inlet_flow = 'true'
-    global RB
-    RB = 'qzu'
-    Rz = 7 * Ra
-    g = 9.81
-    h = []
-    lam_w = 320
-    s = 2e-3
-    # =============================================================================
-    #     global RB
-    #     global einlauf
-    #     global g
-    #     global Ra
-    #     global s
-    #     global lam_w
-    #     lam_w = 100
-    #     s = 0.002
-    #     Ra = 1.5e-6
-    #     Rz = 7 * Ra
-    #     g = 9.81
-    #     einlauf = 'true'                    # hydrodynamischer Einlauf?
-    #
-    #
-    #     RB = 'qzu'                             # RB entweder Tw = konstant oder qzu = konstant
-    #     q_dot = 9000
-    # =============================================================================
-
-    h = []
-
-    for vapourquality in np.linspace(0.1, 1 - 1e-5, 10):
-        p1 = PointND(253.15, vapourquality, "IsoButane", 'Testpunkt Isobutan')
+    fluid_name = 'Butane'
+    x_var = np.linspace(0.1, 1 - 1e-5, 10)
+    alpha_complete = []
+    for vapourquality in x_var:
+        p1 = PointND(T, vapourquality, fluid_name, 'Testpunkt Isobutan')
         alpha = p1.alpha_sieden(m_dot, d_i, 0.1)
         # print(p1.flow_character(300, 0.03))
         # print("alpha: ",alpha[1])
-        plt.plot(vapourquality, alpha[0], 'r.', label="Gesamt")
-        plt.plot(vapourquality, alpha[1], 'g.', label="blasen")
-        plt.plot(vapourquality, alpha[2], 'b.', label="konvektiv")
-        if vapourquality == 0.1:
-            plt.legend()
+        alpha_complete.append(alpha)
         print("Strömungsform:", p1.flow_character(m_dot, d_i)[0], "\n")
+
+    plt.plot(x_var, alpha_complete[0], 'r.', label="Gesamt")
+    plt.plot(x_var, alpha_complete[1], 'g.', label="blasen")
+    plt.plot(x_var, alpha_complete[2], 'b.', label="konvektiv")
+    plt.legend()
+    plt.show()
+
     # delta_p =p1.druckverlust(2.1,0.015,0.1)
 
     # plt.figure(2)
     # plt.plot(np.linspace(0.1,1-1e-5,10),h)
     # plt.title("Höhe Flüssigkeitsspiegel")
 
-    if (inlet_flow != 'true') and (inlet_flow != 'false'):
+    if (p1.inlet_flow != 'true') and (p1.inlet_flow != 'false'):
         print('Unbekannter hydrodynamischer Status. Check Einlauf.')
         sys.exit()
-    RB = 'Tw'  # RB entweder Tw = konstant oder qzu = konstant
-    if RB == 'qzu':
-        if q_dot == None or q_dot == 0:
+    if p1.RB == 'qzu':
+        if p1.q_dot == None or p1.q_dot == 0:
             print("Bitte Wärmestromdichte vorgeben")
             sys.exit
 
-    if (RB != 'Tw') and (RB != 'qzu'):
+    if (p1.RB != 'Tw') and (p1.RB != 'qzu'):
         print('Unbekannter hydrodynamischer Status. Check Einlauf.')
         sys.exit()
