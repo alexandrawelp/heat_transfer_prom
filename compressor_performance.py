@@ -41,29 +41,42 @@ for i, to in enumerate(to_var):
         P[i,j] = calculate_polynom(to, tc, coeff_P)
         m[i,j] = calculate_polynom(to, tc, coeff_m)
 
-fig, ax = plt.subplots(1, 4)
+fig, ax = plt.subplots(2, 3)
 
-ax[0].plot(to_var, P, label=np.round(tc_var,1))
+ax[0,0].plot(to_var, P, label=np.round(tc_var,1))
 
-ax[0].set_title("power")
-ax[0].set_ylabel("power in W")
-
-
-ax[1].plot(to_var, Q+P, label=np.round(tc_var,1))
-ax[1].set_title("heating power")
-ax[1].set_ylabel("heat in W")
+ax[0,0].set_title("power compressor")
+ax[0,0].set_ylabel("power in W")
 
 
+ax[0,1].plot(to_var, Q+P, label=np.round(tc_var,1))
+ax[0,1].set_title("heating power")
+ax[0,1].set_ylabel("heat in W")
 
-ax[2].plot(to_var, m, label=np.round(tc_var,1))
-ax[2].set_title("massflow")
-ax[2].set_ylabel("massflow in kg/h")
 
-ax[3].plot(to_var, (Q+P)/P, label=np.round(tc_var, 1))
-ax[3].set_title("COP")
-ax[3].set_ylabel("COP [-]")
+
+ax[0,2].plot(to_var, m, label=np.round(tc_var,1))
+ax[0,2].set_title("massflow")
+ax[0,2].set_ylabel("massflow in kg/h")
+
+ax[1,2].plot(to_var, (Q+P)/P, label=np.round(tc_var, 1))
+ax[1,2].set_title("COP")
+ax[1,2].set_ylabel("COP [-]")
 
 for i in ax.flat:
     i.set_xlabel("to, evaporating temperature in °C")
     i.legend(loc="best")
+
+ax[1,0].plot(P, (Q+P)/P, label=np.round(tc_var, 1))
+ax[1,0].set_title("COP - power compressor w")
+ax[1,0].set_ylabel("COP")
+ax[1,0].set_xlabel("power compressor in W")
+ax[1,0].legend(loc="best")
+
+ax[1,1].plot(Q+P, (Q+P)/P, label=np.round(tc_var, 1))
+ax[1,1].set_title("COP - heating power w")
+ax[1,1].set_ylabel("COP")
+ax[1,1].set_xlabel("power heat in W")
+ax[1,1].legend(loc="best")
+
 plt.show()
