@@ -41,7 +41,7 @@ for i, to in enumerate(to_var):
         P[i,j] = calculate_polynom(to, tc, coeff_P)
         m[i,j] = calculate_polynom(to, tc, coeff_m)
 
-fig, ax = plt.subplots(1, 3)
+fig, ax = plt.subplots(1, 4)
 
 ax[0].plot(to_var, P, label=np.round(tc_var,1))
 
@@ -56,9 +56,12 @@ ax[1].set_ylabel("heat in W")
 
 
 ax[2].plot(to_var, m, label=np.round(tc_var,1))
-plt.title("massflow")
-
+ax[2].set_title("massflow")
 ax[2].set_ylabel("massflow in kg/h")
+
+ax[3].plot(to_var, (Q+P)/P, label=np.round(tc_var, 1))
+ax[3].set_title("COP")
+ax[3].set_ylabel("COP [-]")
 
 for i in ax.flat:
     i.set_xlabel("to, evaporating temperature in °C")
