@@ -10,6 +10,7 @@ import compressor_performance as comper
 import matplotlib.pyplot as plt
 import numpy as np
 
+
 _props = "REFPROP"
 Tevap = 273.15 - 20
 Tcond = 273.15+60
@@ -52,12 +53,12 @@ def eta_calc(Tev, Tcond, Tin=Tin, fluid_s =fluid_s):
         DESCRIPTION.
 
     """
-    evap = fprop.T_prop_sat(Tevap, fluid_s, composition = comp, option=1) # evaporator pressure
-
-    comp_in = fprop.tp(Tin, evap[0, 1], fluid_s, composition=comp, option = 1)  # compressor entrance at 20C
+    comp = [1]
+    evap = fprop.T_prop_sat(Tevap, fluid_s, composition=comp, option=1) # evaporator pressure
+    comp_in = fprop.tp(Tin, evap, fluid_s, composition=comp, option=1)  # compressor entrance at 20C
     cond = fprop.T_prop_sat(Tcond, fluid_s, composition = comp, option=1) # condenser pressure
     # isentropic state after compressor
-    comp_s = fprop.sp(comp_in[ 4], cond[0, 1], fluid_s, composition=comp) 
+    comp_s = fprop.sp(comp_in[ 4], cond, fluid_s, composition=comp)
     dhs = comp_s[2] - comp_in[2]
     
     to = Tev-273.15
@@ -68,19 +69,17 @@ def eta_calc(Tev, Tcond, Tin=Tin, fluid_s =fluid_s):
     #power_el = br.bitzer_pol(to, tc, br.cP)
     #mdot = br.bitzer_pol(to, tc, br.cm) / 3600
     dh = power_el / mdot
-    comp_out = fprop.hp(comp_in[2]+dh, cond[0,1], fluid_s, composition=comp) 
+    comp_out = fprop.hp(comp_in[2]+dh, cond, fluid_s, composition=comp)
     # fld.ALLPROP('HP', comp_in["H"] + dh, cond["P"])  # real stae after compressor
     #   d = fld.ALLPROP('TP', Tout, cond["P"])  # real stae after compressor (Bitzer)
     v_ratio = comp_out[3] / comp_in[3]
     p_ratio = comp_out[1] / comp_in[1]
     etas = dhs / dh
     
-    return np.array([etas, comp_out[0], comp_out[1], evap[0,1], v_ratio, 
+    return np.array([etas, comp_out[0], comp_out[1], evap, v_ratio,
                      p_ratio, power_el, mdot])
 
-
 if __name__ == "__main__":
-
     fi, ax = plt.subplots(2, 2)
     n_no = 5
     col = ["b.", "ro-", "k", "k.", "bv-"]
@@ -95,6 +94,13 @@ if __name__ == "__main__":
         ax[0, 1].plot(Tc, result[:, 1], col[i], label="%3i" % (te))
         ax[1, 0].plot(Tc, result[:, -2], col[i], label="%3i" % (te))
         ax[1, 1].plot(Tc, result[:, -1], col[i], label="%3i" % (te))
+    for i in ax.flat:
+        i.set_xlabel("tc, condensing temperature in °C")
+    ax[0,0].set_ylabel("eta_s")
+    ax[0,1].set_ylabel("T_out")
+    ax[1,0].set_ylabel("Power_el")
+    ax[1,1].set_ylabel("m_dot")
 ax[1, 1].legend()
 fi.savefig("bitzer2EESP-05PProbe.png")
 print(eta_calc(Tevap, Tcond))
+plt.show()

@@ -95,8 +95,30 @@ def hps(h, p, fluid, composition=[1.0], option=1, units =_units, props=_props):
             alle = [_temp, p,  h, 1/rho, s, x]
     return np.array(alle)
          
-def T_prop_sat(Tevap, fluid_s, composition = comp, option=1):
-    p = RP.REFPROP2dll(fluid,"TQ","p", units, 0, h, p, composition)
+def T_prop_sat(Tevap, fluid, composition, option=1, units=_units):
+    o = RP.REFPROP2dll(fluid, "TQ", "p", units, 0, Tevap, 1, composition)
+    p = o.Output[0]
+    return p
+
+def sp(s, p, fluid, composition, option = 1, props=_props, units=_units):
+    if props == "REFPROP":
+        o = RP.REFPROP2dll(fluid, "SP", "T;H;D;q", units, 0, s, p, composition)
+        if option == 0:
+            alle = []
+
+        elif option == 1:
+            alle = [o.Output[0], p, o.Output[1], 1 / o.Output[2], s, o.Output[3]]
+    return alle
+
+def hp(h, p, fluid, composition, option = 1, props=_props, units=_units):
+    if props == "REFPROP":
+        o = RP.REFPROP2dll(fluid, "HP", "T;S;D;S;q", units, 0, h, p, composition)
+        if option == 0:
+            alle = []
+
+        elif option == 1:
+            alle = [o.Output[0], p, h, 1 / o.Output[2], *o.Output[3:4]]
+    return alle
     
 name_properties = [
     ["temperature", "p", "x", "h",  "s", "rho", "mu", "cp", "lambda_s", 

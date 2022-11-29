@@ -23,10 +23,10 @@ def read_file(name_file):
     coeff_T_suction20 = pd.read_excel(name_file, header=26, usecols=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
     coeff_Q = coeff_T_suction20.iloc[0]
     coeff_P = coeff_T_suction20.iloc[1]
-    coeff_m = coeff_T_suction20.iloc[2]
+    coeff_m = coeff_T_suction20.iloc[2]/3600
     return coeff_Q, coeff_P, coeff_m
 
-def cal_range(to_var, tc_var, coeff_Q, coeff_P, coeff_m):
+def cal_range_var(to_var, tc_var, coeff_Q, coeff_P, coeff_m):
     Q = np.zeros((len(to_var), len(tc_var)))
     P = np.zeros((len(to_var), len(tc_var)))
     m = np.zeros((len(to_var), len(tc_var)))
@@ -35,6 +35,12 @@ def cal_range(to_var, tc_var, coeff_Q, coeff_P, coeff_m):
             Q[i,j] = calculate_polynom(to, tc, coeff_Q)
             P[i,j] = calculate_polynom(to, tc, coeff_P)
             m[i,j] = calculate_polynom(to, tc, coeff_m)
+    return Q, P, m
+
+def cal_range(to, tc, coeff_Q, coeff_P, coeff_m):
+    Q = calculate_polynom(to, tc, coeff_Q)
+    P = calculate_polynom(to, tc, coeff_P)
+    m = calculate_polynom(to, tc, coeff_m)
     return Q, P, m
 
 def plot_results(Q, P, m):
@@ -82,7 +88,7 @@ if __name__ == "__main__":
     tc_var = np.linspace(10, 65, 10)
 
     coeff_Q, coeff_P, coeff_m = read_file(name)
-    Q, P, m = cal_range(to_var, tc_var, coeff_Q, coeff_P, coeff_m)
+    Q, P, m = cal_range_var(to_var, tc_var, coeff_Q, coeff_P, coeff_m)
 
     plot_results(Q, P, m)
 
