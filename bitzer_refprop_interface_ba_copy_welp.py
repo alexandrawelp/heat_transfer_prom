@@ -54,11 +54,12 @@ def eta_calc(Tev, Tcond, Tin=Tin, fluid_s =fluid_s):
 
     """
     comp = [1]
-    evap = fprop.T_prop_sat(Tevap, fluid_s, composition=comp, option=1) # evaporator pressure
+    evap = fprop.T_prop_sat(Tev, fluid_s, composition=comp, option=1) # evaporator pressure
     comp_in = fprop.tp(Tin, evap, fluid_s, composition=comp, option=1)  # compressor entrance at 20C
     cond = fprop.T_prop_sat(Tcond, fluid_s, composition = comp, option=1) # condenser pressure
     # isentropic state after compressor
     comp_s = fprop.sp(comp_in[ 4], cond, fluid_s, composition=comp)
+    print(f"comp_s {comp_s}")
     dhs = comp_s[2] - comp_in[2]
     
     to = Tev-273.15
