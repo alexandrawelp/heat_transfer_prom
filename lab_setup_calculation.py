@@ -115,3 +115,5 @@ print(f"delta_h superheated hp: {delta_h_sh} J/kg")
 print(f"delta_h wet steam hp: {delta_h_ws} J/kg")
 print(f"delta_h subcooled: {delta_h_sc} J/kg")
 plt.show()
+
+m_var = np.linspace(0.01, 0.025, 10)

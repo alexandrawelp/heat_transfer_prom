@@ -19,7 +19,7 @@ Tout = 273.15 + 131.5
 
 fluid_s = "Propane * Pentane"
 comp = [.4, 0.6]
-fluid_s = "Propane"
+fluid_s = "Butane"
 comp = [1]
 #secondary_fluid = CP.AbstractState("TTSE&HEOS", fluid_s)
 # interesting, when using "BICUBIC&HEOS" the exergy of the ambient state is 0.15!
