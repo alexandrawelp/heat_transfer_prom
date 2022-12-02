@@ -10,6 +10,8 @@ author: Alexandra Welp
 import CoolProp.CoolProp as CP
 import numpy as np
 import matplotlib.pyplot as plt
+import ht
+
 
 fluid = "IsoButane"
 
@@ -114,6 +116,62 @@ plt.legend()
 print(f"delta_h superheated hp: {delta_h_sh} J/kg")
 print(f"delta_h wet steam hp: {delta_h_ws} J/kg")
 print(f"delta_h subcooled: {delta_h_sc} J/kg")
+
+
+# Calculation counter flow heat exchanger
+m_var = np.linspace(0.01, 0.025, 10)
+m_dot = 0.01
+rho_l = CP.PropsSI("D", "Q", 0, "P", p_c, fluid)
+mu_l = CP.PropsSI("VISCOSITY", "Q", 0, "P", p_c, fluid)
+k_l = CP.PropsSI("CONDUCTIVITY", "Q", 0, "P", p_c, fluid)
+cp_l = CP.PropsSI("CP0MASS", "Q", 0, "P", p_c, fluid)
+p_crit = CP.PropsSI("PCRIT", fluid)
+d_i = 12e-3
+s = 2
+d_a = d_i + 2 * s
+
+U = 1000
+
+def T_log(T1ein, T1aus, T2ein, T2aus):
+    deltaTein = T1ein - T2aus
+    deltaTaus = T1aus - T2ein
+    delta_T_log = (deltaTein - deltaTaus) / np.log(deltaTein/deltaTaus)
+    return delta_T_log
+
+# secundary fluid
+cp_w = 4.1819
+T_pinch = 5
+T_A1 = T_3 - T_pinch
+T_A2 = T_c - T_pinch*2
+delta_T_log_sc = T_log(T_c, T_3, T_A1, T_A2)
+A = m_dot*delta_h_sc / delta_T_log_sc/U
+l = A / np.pi / d_i
+print(f"length for subcooled: {l}")
+
+
+# size of heat storages
+rho_w = 972.42      # density water
+timestorage = 10 * 3600
+rho_thermooil = 900
+cp_thermooil = 2.3
+Q_storage_sc = m_dot * delta_h_sc * timestorage/ 1000
+Q_storage_ws = m_dot * delta_h_ws * timestorage / 1000
+Q_storage_sh = m_dot * delta_h_sh * timestorage /1000
+
+delta_T_sc = T_A2 - T_A1
+delta_T_ws = 10
+delta_T_sh = T_2 - T_c
+
+m_sc = Q_storage_sc / (cp_w * delta_T_sc)
+m_ws = Q_storage_ws / (cp_thermooil * delta_T_ws)
+m_sh = Q_storage_sh / (cp_thermooil * delta_T_sh)
+
+V_sc = m_sc / rho_w
+V_ws = m_ws / (rho_thermooil)
+V_sh = m_sh / (rho_thermooil)
+
+print(f"Q_storage_sc: {Q_storage_sc} kJ = {Q_storage_sc/3600} kWh, {V_sc} m^3")
+print(f"Q_storage_ws: {Q_storage_ws} kJ = {Q_storage_ws/3600} kWh, {V_ws} m^3")
+print(f"Q_storage_sh: {Q_storage_sh} kJ,= {Q_storage_sh/3600} kWh, {V_sh} m^3")
 plt.show()
 
-m_var = np.linspace(0.01, 0.025, 10)
