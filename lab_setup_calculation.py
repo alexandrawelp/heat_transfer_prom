@@ -151,25 +151,33 @@ print(f"length for subcooled: {l}")
 
 # size of heat storages
 rho_w = 972.42      # density water
-timestorage = 10 * 3600
+timestorage =10 * 3600
 rho_thermooil = 900
 cp_thermooil = 2.3
 Q_storage_sc = m_dot * delta_h_sc * timestorage/ 1000
 Q_storage_ws = m_dot * delta_h_ws * timestorage / 1000
 Q_storage_sh = m_dot * delta_h_sh * timestorage /1000
+Q_storage_cold = m_dot * delta_h_o * timestorage/1000
 
+delta_T_cold = 35
 delta_T_sc = T_A2 - T_A1
-delta_T_ws = 10
+delta_T_ws = 15
 delta_T_sh = T_2 - T_c
+cp_methanol = 2.4386
+print(CP.PhaseSI( "T", 281, "D", 801, "Methanol"))
+rho_methanol = CP.PropsSI("D" ,"T", T_1, "P", 1e5, "Methanol")
 
+m_methanol = Q_storage_cold / (cp_methanol * delta_T_cold)
 m_sc = Q_storage_sc / (cp_w * delta_T_sc)
-m_ws = Q_storage_ws / (cp_thermooil * delta_T_ws)
+m_ws = Q_storage_ws / (cp_w * delta_T_ws)
 m_sh = Q_storage_sh / (cp_thermooil * delta_T_sh)
 
+V_methanol = m_methanol / rho_methanol
 V_sc = m_sc / rho_w
-V_ws = m_ws / (rho_thermooil)
+V_ws = m_ws / (rho_w)
 V_sh = m_sh / (rho_thermooil)
 
+print(f"Q_storage_methanol: {Q_storage_cold} kJ = {Q_storage_cold/3600} kWh, {V_methanol} m^3")
 print(f"Q_storage_sc: {Q_storage_sc} kJ = {Q_storage_sc/3600} kWh, {V_sc} m^3")
 print(f"Q_storage_ws: {Q_storage_ws} kJ = {Q_storage_ws/3600} kWh, {V_ws} m^3")
 print(f"Q_storage_sh: {Q_storage_sh} kJ,= {Q_storage_sh/3600} kWh, {V_sh} m^3")
