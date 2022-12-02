@@ -124,13 +124,19 @@ m_dot = 0.01
 rho_l = CP.PropsSI("D", "Q", 0, "P", p_c, fluid)
 mu_l = CP.PropsSI("VISCOSITY", "Q", 0, "P", p_c, fluid)
 k_l = CP.PropsSI("CONDUCTIVITY", "Q", 0, "P", p_c, fluid)
-cp_l = CP.PropsSI("CP0MASS", "Q", 0, "P", p_c, fluid)
+cp_l = 2.981 #CP.PropsSI("CP0MASS", "Q", 0, "P", p_c, fluid)
+cp_v = 2.4549#CP.PropsSI("CP0MASS", "Q", 1, "P", p_c, fluid)
 p_crit = CP.PropsSI("PCRIT", fluid)
 d_i = 12e-3
 s = 2
 d_a = d_i + 2 * s
 
 U = 1000
+
+
+
+
+
 
 def T_log(T1ein, T1aus, T2ein, T2aus):
     deltaTein = T1ein - T2aus
@@ -151,13 +157,13 @@ print(f"length for subcooled: {l}")
 
 # size of heat storages
 rho_w = 972.42      # density water
-timestorage =10 * 3600
+timestorage =3 * 3600
 rho_thermooil = 900
 cp_thermooil = 2.3
-Q_storage_sc = m_dot * delta_h_sc * timestorage/ 1000
+Q_storage_sc = m_dot * delta_h_sc * timestorage / 1000
 Q_storage_ws = m_dot * delta_h_ws * timestorage / 1000
-Q_storage_sh = m_dot * delta_h_sh * timestorage /1000
-Q_storage_cold = m_dot * delta_h_o * timestorage/1000
+Q_storage_sh = m_dot * delta_h_sh * timestorage / 1000
+Q_storage_cold = m_dot * delta_h_o * timestorage / 1000
 
 delta_T_cold = 35
 delta_T_sc = T_A2 - T_A1
@@ -174,12 +180,57 @@ m_sh = Q_storage_sh / (cp_thermooil * delta_T_sh)
 
 V_methanol = m_methanol / rho_methanol
 V_sc = m_sc / rho_w
-V_ws = m_ws / (rho_w)
-V_sh = m_sh / (rho_thermooil)
+V_ws = m_ws / rho_w
+V_sh = m_sh / rho_thermooil
 
 print(f"Q_storage_methanol: {Q_storage_cold} kJ = {Q_storage_cold/3600} kWh, {V_methanol} m^3")
 print(f"Q_storage_sc: {Q_storage_sc} kJ = {Q_storage_sc/3600} kWh, {V_sc} m^3")
 print(f"Q_storage_ws: {Q_storage_ws} kJ = {Q_storage_ws/3600} kWh, {V_ws} m^3")
 print(f"Q_storage_sh: {Q_storage_sh} kJ,= {Q_storage_sh/3600} kWh, {V_sh} m^3")
+
+
+# calculate heat transfer coefficients
+
+def alpha_1P_i(p, T, fluid, m_dot, d_i):
+    vis = CP.PropsSI("VISCOSITY", "P", p, "T", T, fluid)
+    rho = CP.PropsSI("D", "P", p, "T", T, fluid)
+    Pr = CP.PropsSI("PRANDTL", "P", p, "T", T, fluid)
+    lam = CP.PropsSI("L", "P", p, "T", T, fluid)
+    Re = 4 * m_dot / (vis * np.pi * d_i)
+    Nu = ht.conv_internal.Nu_conv_internal(Re, Pr, Di=d_i)
+    alpha = lam * Nu / d_i
+    return alpha
+
+
+def alpha_1P_annulus(p, T, fluid, m_dot, d_i, d_a):
+    if fluid == "thermooil":
+        # data from Therminol 66 data sheet for 130 °C
+        vis = 2.05e-3
+        rho = 935
+        Pr = 35.82
+        lam = 0.111
+    else:
+        vis = CP.PropsSI("VISCOSITY", "P", p, "T", T, fluid)
+        rho = CP.PropsSI("D", "P", p, "T", T, fluid)
+        Pr = CP.PropsSI("PRANDTL", "P", p, "T", T, fluid)
+        lam = CP.PropsSI("L", "P", p, "T", T, fluid)
+    Re = 4 * m_dot / (vis * np.pi * (d_a-d_i))
+    if Re > 2300:
+        Nu = 0.023 * Re ** 0.8 * Pr ** 0.4
+    else:
+        Nu = 3.66 + 1.2 * (d_i / d_a) ** -0.8
+    alpha = lam * Nu / (d_a - d_i)
+    return alpha
+
+m_sc = m_dot * cp_l / cp_w
+m_sh = m_dot * cp_v / cp_thermooil
+
+
+alpha_sc_i = alpha_1P_i(p_c, 0.5 * (T_c + T_3), fluid, m_dot, d_i)
+alpha_sh_i = alpha_1P_i(p_c, 0.5 * (T_c + T_2), fluid, m_dot, d_i)
+alpha_sc_o = alpha_1P_annulus(1e5, 0.5 * (T_A1 + T_A2), 'water', m_sc, d_i, d_a)
+alpha_sh_o = alpha_1P_annulus(1e5, T_2, 'thermooil', m_sh, d_i, d_a)
+
+
 plt.show()
 
