@@ -120,23 +120,19 @@ print(f"delta_h subcooled: {delta_h_sc} J/kg")
 
 # Calculation counter flow heat exchanger
 m_var = np.linspace(0.01, 0.025, 10)
-m_dot = 0.01
+m_dot = 0.010
 rho_l = CP.PropsSI("D", "Q", 0, "P", p_c, fluid)
+rho_v = CP.PropsSI("D", "Q", 1, "P", p_c, fluid)
 mu_l = CP.PropsSI("VISCOSITY", "Q", 0, "P", p_c, fluid)
+mu_v = CP.PropsSI("VISCOSITY", "Q", 1, "P", p_c, fluid)
 k_l = CP.PropsSI("CONDUCTIVITY", "Q", 0, "P", p_c, fluid)
-cp_l = 2.981 #CP.PropsSI("CP0MASS", "Q", 0, "P", p_c, fluid)
-cp_v = 2.4549#CP.PropsSI("CP0MASS", "Q", 1, "P", p_c, fluid)
+cp_l = 2981 #CP.PropsSI("CP0MASS", "Q", 0, "P", p_c, fluid)
+cp_v = 24549#CP.PropsSI("CP0MASS", "Q", 1, "P", p_c, fluid)
 p_crit = CP.PropsSI("PCRIT", fluid)
 d_i = 12e-3
-s = 2
-d_a = d_i + 2 * s
-
-U = 1000
-
-
-
-
-
+s = 1.5e-3
+d_a = 18e-3
+d_ai = d_i + 2 * s
 
 def T_log(T1ein, T1aus, T2ein, T2aus):
     deltaTein = T1ein - T2aus
@@ -144,32 +140,33 @@ def T_log(T1ein, T1aus, T2ein, T2aus):
     delta_T_log = (deltaTein - deltaTaus) / np.log(deltaTein/deltaTaus)
     return delta_T_log
 
-# secundary fluid
-cp_w = 4.1819
-T_pinch = 5
-T_A1 = T_3 - T_pinch
-T_A2 = T_c - T_pinch*2
-delta_T_log_sc = T_log(T_c, T_3, T_A1, T_A2)
-A = m_dot*delta_h_sc / delta_T_log_sc/U
-l = A / np.pi / d_i
-print(f"length for subcooled: {l}")
+# secondary fluid
+cp_w = 4181.9
+T_pinch = 10
+T_sc_in = T_3 - T_pinch
+T_sc_out = T_c - T_pinch * 2
+T_sh_in = T_c - T_pinch
+T_sh_out = T_2 - T_pinch * 2
+T_ws_out = T_c - 5
+delta_T_ws = 25
+T_ws_in = T_ws_out - delta_T_ws
 
 
 # size of heat storages
 rho_w = 972.42      # density water
-timestorage =3 * 3600
+timestorage = 3 * 3600
 rho_thermooil = 900
-cp_thermooil = 2.3
-Q_storage_sc = m_dot * delta_h_sc * timestorage / 1000
-Q_storage_ws = m_dot * delta_h_ws * timestorage / 1000
-Q_storage_sh = m_dot * delta_h_sh * timestorage / 1000
-Q_storage_cold = m_dot * delta_h_o * timestorage / 1000
+cp_thermooil = 2300
+Q_storage_sc = m_dot * delta_h_sc * timestorage
+Q_storage_ws = m_dot * delta_h_ws * timestorage
+Q_storage_sh = m_dot * delta_h_sh * timestorage
+Q_storage_cold = m_dot * delta_h_o * timestorage
 
 delta_T_cold = 35
-delta_T_sc = T_A2 - T_A1
-delta_T_ws = 15
-delta_T_sh = T_2 - T_c
-cp_methanol = 2.4386
+delta_T_sc = T_sc_out - T_sc_in
+
+delta_T_sh = T_sh_out - T_sh_in
+cp_methanol = 2438.6
 print(CP.PhaseSI( "T", 281, "D", 801, "Methanol"))
 rho_methanol = CP.PropsSI("D" ,"T", T_1, "P", 1e5, "Methanol")
 
@@ -183,10 +180,10 @@ V_sc = m_sc / rho_w
 V_ws = m_ws / rho_w
 V_sh = m_sh / rho_thermooil
 
-print(f"Q_storage_methanol: {Q_storage_cold} kJ = {Q_storage_cold/3600} kWh, {V_methanol} m^3")
-print(f"Q_storage_sc: {Q_storage_sc} kJ = {Q_storage_sc/3600} kWh, {V_sc} m^3")
-print(f"Q_storage_ws: {Q_storage_ws} kJ = {Q_storage_ws/3600} kWh, {V_ws} m^3")
-print(f"Q_storage_sh: {Q_storage_sh} kJ,= {Q_storage_sh/3600} kWh, {V_sh} m^3")
+print(f"Q_storage_methanol: {Q_storage_cold/1000} kJ = {Q_storage_cold/3600/1000} kWh, {V_methanol} m^3")
+print(f"Q_storage_sc: {Q_storage_sc/1000} kJ = {Q_storage_sc/3600/1000} kWh, {V_sc} m^3")
+print(f"Q_storage_ws: {Q_storage_ws/1000} kJ = {Q_storage_ws/3600/1000} kWh, {V_ws} m^3")
+print(f"Q_storage_sh: {Q_storage_sh/1000} kJ,= {Q_storage_sh/3600/1000} kWh, {V_sh} m^3")
 
 
 # calculate heat transfer coefficients
@@ -202,7 +199,7 @@ def alpha_1P_i(p, T, fluid, m_dot, d_i):
     return alpha
 
 
-def alpha_1P_annulus(p, T, fluid, m_dot, d_i, d_a):
+def alpha_1P_annulus(p, T, fluid, m_dot, d_ai, d_a):
     if fluid == "thermooil":
         # data from Therminol 66 data sheet for 130 °C
         vis = 2.05e-3
@@ -214,23 +211,53 @@ def alpha_1P_annulus(p, T, fluid, m_dot, d_i, d_a):
         rho = CP.PropsSI("D", "P", p, "T", T, fluid)
         Pr = CP.PropsSI("PRANDTL", "P", p, "T", T, fluid)
         lam = CP.PropsSI("L", "P", p, "T", T, fluid)
-    Re = 4 * m_dot / (vis * np.pi * (d_a-d_i))
+    Re = 4 * m_dot * (d_a - d_ai) / (vis * np.pi * (d_a ** 2 - d_ai ** 2))
     if Re > 2300:
         Nu = 0.023 * Re ** 0.8 * Pr ** 0.4
     else:
-        Nu = 3.66 + 1.2 * (d_i / d_a) ** -0.8
-    alpha = lam * Nu / (d_a - d_i)
+        Nu = 3.66 + 1.2 * (d_ai / d_a) ** -0.8
+    alpha = lam * Nu / (d_a - d_ai)
     return alpha
 
-m_sc = m_dot * cp_l / cp_w
-m_sh = m_dot * cp_v / cp_thermooil
 
+m_sc_dot = m_dot * delta_h_sc / (cp_w * delta_T_sc)
+m_sh_dot = m_dot * delta_h_sh / (cp_thermooil * delta_T_sh)
+m_ws_dot = m_dot * delta_h_ws / (cp_w * delta_T_ws)
+
+u_sc = m_sc_dot / (rho_w * np.pi * 0.25 * (d_a ** 2 - d_ai ** 2))
+u_ws = m_ws_dot / (rho_w * np.pi * 0.25 * (d_a ** 2 - d_ai ** 2))
+u_wf = m_dot / (rho_v * np.pi * 0.25 * d_i ** 2)
+u_sh = m_sh_dot / (935 * np.pi * 0.25 * (d_a ** 2 - d_ai ** 2))
 
 alpha_sc_i = alpha_1P_i(p_c, 0.5 * (T_c + T_3), fluid, m_dot, d_i)
 alpha_sh_i = alpha_1P_i(p_c, 0.5 * (T_c + T_2), fluid, m_dot, d_i)
-alpha_sc_o = alpha_1P_annulus(1e5, 0.5 * (T_A1 + T_A2), 'water', m_sc, d_i, d_a)
-alpha_sh_o = alpha_1P_annulus(1e5, T_2, 'thermooil', m_sh, d_i, d_a)
+alpha_sc_o = alpha_1P_annulus(1e5, 0.5 * (T_sc_in + T_sc_out), 'water', m_sc_dot, d_ai, d_a)
+alpha_sh_o = alpha_1P_annulus(1e5, T_2, 'thermooil', m_sh_dot, d_ai, d_a)
+alpha_ws_o = alpha_1P_annulus(1e5, 0.5 * (T_ws_in + T_ws_out), 'water', m_ws_dot, d_ai, d_a)
+alpha_ws_i = ht.condensation.Shah(m_dot, 0.5, d_i, rho_l, mu_l, k_l, cp_l, p_c, p_crit)
+alpha_ws_i_alternative = ht.condensation.Cavallini_Smith_Zecchin(m_dot, 0.5, d_i, rho_l, rho_v, mu_l, mu_v, k_l, cp_l)
+
+def cal_U(alpha_i, alpha_o, d_a, d_ai, lam_tube):
+    U = (1 / alpha_i + np.log(d_a / d_ai) * d_ai / (2 * lam_tube) + d_ai / (alpha_o * d_a)) ** (-1)
+    return U
 
 
+lam_tube = 300
+U_sc = cal_U(alpha_sc_i, alpha_sc_o, d_a, d_ai, lam_tube)
+U_sh = cal_U(alpha_sh_i, alpha_sh_o, d_a, d_ai, lam_tube)
+U_ws = cal_U(alpha_ws_i, alpha_ws_o, d_a, d_ai, lam_tube)
+
+delta_T_log_sc = T_log(T_c, T_3, T_sc_in, T_sc_out)
+delta_T_log_sh = T_log(T_2, T_c, T_sh_in, T_sh_out)
+delta_T_log_ws = T_log(T_c, T_c, T_ws_in, T_ws_out)
+A_sc = m_dot * delta_h_sc / delta_T_log_sc / U_sc
+A_sh = m_dot * delta_h_sh / delta_T_log_sh / U_sh
+A_ws = m_dot * delta_h_ws / delta_T_log_ws / U_ws
+l_sc = A_sc / np.pi / d_i
+l_sh = A_sh / np.pi / d_i
+l_ws = A_ws / np.pi / d_i
+print(f"length for subcooled: {l_sc}")
+print(f"length for superheated: {l_sh}")
+print(f"length for wetsteam: {l_ws}")
 plt.show()
 
