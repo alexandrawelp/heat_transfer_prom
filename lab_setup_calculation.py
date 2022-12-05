@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 import ht
 
 
-fluid = "IsoButane"
+fluid = "REFPROP::IsoButane"
 
 p_o = 103000        # lowest possible pressure
 T_o = CP.PropsSI("T", "P", p_o, "Q", 0.5, fluid)
