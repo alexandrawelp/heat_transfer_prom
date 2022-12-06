@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 import ht
 import fluid_properties_rp as rp
 
-fluid = "REFPROP::IsoButane"
+fluid = "REFPROP::IsoButane[0.5]&Pentane[0.5]"
 
 p_o = 103000        # lowest possible pressure
 #T_o = CP.PropsSI("T", "P", p_o, "Q", 1, fluid)     # zeotropic fluid mixtures temperature for x = 1
@@ -138,8 +138,8 @@ d_a = 18e-3
 d_ai = d_i + 2 * s
 
 def T_log(T1ein, T1aus, T2ein, T2aus):
-    deltaTein = T1ein - T2aus
-    deltaTaus = T1aus - T2ein
+    deltaTein = abs(T1ein - T2aus)
+    deltaTaus = abs(T1aus - T2ein)
     delta_T_log = (deltaTein - deltaTaus) / np.log(deltaTein/deltaTaus)
     return delta_T_log
 
@@ -153,6 +153,8 @@ T_sh_out = T_2 - T_pinch * 2
 T_ws_out = T_2b - 5
 delta_T_ws = 25
 T_ws_in = T_ws_out - delta_T_ws
+T_evap_out = T_4 + T_pinch
+T_evap_in = T_1 + T_pinch * 2
 
 
 # size of heat storages
@@ -165,7 +167,7 @@ Q_storage_ws = m_dot * delta_h_ws * timestorage
 Q_storage_sh = m_dot * delta_h_sh * timestorage
 Q_storage_cold = m_dot * delta_h_o * timestorage
 
-delta_T_cold = 35
+delta_T_evap = T_evap_in - T_evap_out
 delta_T_sc = T_sc_out - T_sc_in
 
 delta_T_sh = T_sh_out - T_sh_in
@@ -173,7 +175,7 @@ cp_methanol = 2438.6
 print(CP.PhaseSI( "T", 281, "D", 801, "Methanol"))
 rho_methanol = CP.PropsSI("D" ,"T", T_1, "P", 1e5, "Methanol")
 
-m_methanol = Q_storage_cold / (cp_methanol * delta_T_cold)
+m_methanol = Q_storage_cold / (cp_methanol * delta_T_evap)
 m_sc = Q_storage_sc / (cp_w * delta_T_sc)
 m_ws = Q_storage_ws / (cp_w * delta_T_ws)
 m_sh = Q_storage_sh / (cp_thermooil * delta_T_sh)
@@ -226,11 +228,13 @@ def alpha_1P_annulus(p, T, fluid, m_dot, d_ai, d_a):
 m_sc_dot = m_dot * delta_h_sc / (cp_w * delta_T_sc)
 m_sh_dot = m_dot * delta_h_sh / (cp_thermooil * delta_T_sh)
 m_ws_dot = m_dot * delta_h_ws / (cp_w * delta_T_ws)
+m_evap = m_dot * delta_h_o / (cp_methanol * delta_T_evap)
 
 u_sc = m_sc_dot / (rho_w * np.pi * 0.25 * (d_a ** 2 - d_ai ** 2))
 u_ws = m_ws_dot / (rho_w * np.pi * 0.25 * (d_a ** 2 - d_ai ** 2))
 u_wf = m_dot / (rho_v * np.pi * 0.25 * d_i ** 2)
 u_sh = m_sh_dot / (935 * np.pi * 0.25 * (d_a ** 2 - d_ai ** 2))
+u_evap = m_evap / (rho_methanol * np.pi * 0.25 * (d_a ** 2 - d_ai ** 2))
 
 alpha_sc_i = alpha_1P_i(p_c, 0.5 * (T_2c + T_3), fluid, m_dot, d_i)
 alpha_sh_i = alpha_1P_i(p_c, 0.5 * (T_2b + T_2), fluid, m_dot, d_i)
@@ -238,7 +242,21 @@ alpha_sc_o = alpha_1P_annulus(1e5, 0.5 * (T_sc_in + T_sc_out), 'water', m_sc_dot
 alpha_sh_o = alpha_1P_annulus(1e5, T_2, 'thermooil', m_sh_dot, d_ai, d_a)
 alpha_ws_o = alpha_1P_annulus(1e5, 0.5 * (T_ws_in + T_ws_out), 'water', m_ws_dot, d_ai, d_a)
 alpha_ws_i = ht.condensation.Shah(m_dot, 0.5, d_i, rho_l, mu_l, k_l, cp_l, p_c, p_crit)
-alpha_ws_i_alternative = ht.condensation.Cavallini_Smith_Zecchin(m_dot, 0.5, d_i, rho_l, rho_v, mu_l, mu_v, k_l, cp_l)
+
+rho_l_evap = CP.PropsSI("D", "P", p_o, "Q", 0, fluid)
+rho_v_evap = CP.PropsSI("D", "P", p_o, "Q", 1, fluid)
+mu_l_evap = CP.PropsSI("VISCOSITY", "P", p_o, "Q", 0, fluid)
+mu_v_evap = CP.PropsSI("VISCOSITY", "P", p_o, "Q", 1, fluid)
+k_l_evap = CP.PropsSI("L", "P", p_o, "Q", 0, fluid)
+cp_l_evap = CP.PropsSI("C", "P", p_o, "Q", 0, fluid)
+h_evap = CP.PropsSI("H", "P", p_o, "Q", 1, fluid) - CP.PropsSI("H", "P", p_o, "Q", 0, fluid)
+sigma_evap = CP.PropsSI("I", "P", p_o, "Q", 0, fluid)
+T_excess = T_pinch + T_4b
+dPsat = CP.PropsSI("P", "T", T_excess, "Q", 0, fluid) - p_o
+
+alpha_evap_i = ht.boiling_flow.Chen_Bennett(m_dot, 0.5, d_i, rho_l_evap, rho_v_evap, mu_l_evap, mu_v_evap, k_l_evap
+                                            , cp_l_evap, h_evap, sigma_evap, dPsat, T_excess)
+alpha_evap_o = alpha_1P_annulus(1e5, 0.5 * (T_evap_in + T_evap_out), 'methanol', m_evap, d_ai, d_a)
 
 
 def cal_U(alpha_i, alpha_o, d_a, d_ai, lam_tube):
@@ -250,18 +268,25 @@ lam_tube = 300
 U_sc = cal_U(alpha_sc_i, alpha_sc_o, d_a, d_ai, lam_tube)
 U_sh = cal_U(alpha_sh_i, alpha_sh_o, d_a, d_ai, lam_tube)
 U_ws = cal_U(alpha_ws_i, alpha_ws_o, d_a, d_ai, lam_tube)
+U_evap = cal_U(alpha_evap_i, alpha_evap_o, d_a, d_ai, lam_tube)
 
 delta_T_log_sc = T_log(T_2c, T_3, T_sc_in, T_sc_out)
 delta_T_log_sh = T_log(T_2, T_2b, T_sh_in, T_sh_out)
 delta_T_log_ws = T_log(T_2b, T_2c, T_ws_in, T_ws_out)
+delta_T_log_evap = T_log(T_4, T_1, T_evap_in, T_evap_out)
+
 A_sc = m_dot * delta_h_sc / delta_T_log_sc / U_sc
 A_sh = m_dot * delta_h_sh / delta_T_log_sh / U_sh
 A_ws = m_dot * delta_h_ws / delta_T_log_ws / U_ws
+A_evap = m_dot * delta_h_o / delta_T_log_evap / U_evap
 l_sc = A_sc / np.pi / d_i
 l_sh = A_sh / np.pi / d_i
 l_ws = A_ws / np.pi / d_i
-print(f"length for subcooled: {l_sc}")
-print(f"length for superheated: {l_sh}")
-print(f"length for wetsteam: {l_ws}")
+l_evap = A_evap / np.pi /d_i
+print(f"length for subcooled: {l_sc} m")
+print(f"length for superheated: {l_sh} m")
+print(f"length for wetsteam: {l_ws} m")
+print(f"length for evaporator: {l_evap} m")
+
 plt.show()
 
