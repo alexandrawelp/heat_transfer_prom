@@ -276,7 +276,7 @@ plt.legend()
 # Berechnung des Nassdampfbereichs #
 s_i = []
 s_j = []
-t_step = np.linspace(200, 390, 50)
+t_step = np.linspace(200, 442, 50)
 for t_i in t_step:
     s_i1 = CP.PropsSI('S', 'T', t_i, 'Q', 0, fluid)
     s_i2 = CP.PropsSI('S', 'T', t_i, 'Q', 1, fluid)
@@ -314,7 +314,7 @@ plt.legend()
 # Berechnung des Nassdampfbereichs #
 h_i = []
 h_j = []
-t_step = np.linspace(200, 390, 50)
+t_step = np.linspace(250, 442, 50)
 for t_i in t_step:
     h_i1 = CP.PropsSI('H', 'T', t_i, 'Q', 0, fluid)
     h_i2 = CP.PropsSI('H', 'T', t_i, 'Q', 1, fluid)
@@ -328,7 +328,7 @@ plt.plot(np.array(h_j) * m_dot, t_step, 'k-', label="wet steam region")
 plt.title('T-h-Diagramm für ' + fluid)
 
 # Berechnung Isobare #
-h_step = np.linspace(0, 650000, 100)
+h_step = np.linspace(0, 700000, 100)
 for px in [p_o, p_c]:
     t_isobar = []
     for hi in h_step:
