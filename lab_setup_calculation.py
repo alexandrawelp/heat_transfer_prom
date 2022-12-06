@@ -49,63 +49,39 @@ s_2c = CP.PropsSI("S", "P", p_c, "Q", 0, fluid)
 delta_h_sh = h_2 - h_2b
 delta_h_ws = h_2b - h_2c
 
-h_4b = CP.PropsSI("H", "P", p_o, "Q", 0, fluid)
-s_4b = CP.PropsSI("S", "P", p_o, "Q", 0, fluid)
+
+complete_subcooling = 'off'
+if complete_subcooling == 'on':
+    delta_T_4_4b = 10          # deltaT subcooled low pressure
+    T_4 = T_4b - delta_T_4_4b
+    h_4 = CP.PropsSI("H", "T", T_4, "P", p_o, fluid)
+    h_3 = h_4                   # throttle isenthalp
+    T_3 = CP.PropsSI("T", "P", p_c, "H", h_3, fluid)
+
+limited_subcooling = 'on'
+if limited_subcooling == 'on':
+    delta_Tu_T3 = 20
+    Tu = 25 + 273.15
+    T_3 = Tu + delta_Tu_T3
+    h_3 = CP.PropsSI("H", "T", T_3, "P", p_c, fluid)
+    h_4 = h_3
+    T_4 = CP.PropsSI("T", "H", h_4, "P", p_o, fluid)
+    if T_4 >= T_4b:
+        T_4b = T_4
+
+h_4b = CP.PropsSI("H", "P", p_o, "T", T_4b, fluid)
+s_4b = CP.PropsSI("S", "P", p_o, "T", T_4b, fluid)
 h_4c = CP.PropsSI("H", "P", p_o, "Q", 1, fluid)
 s_4c = CP.PropsSI("S", "P", p_o, "Q", 1, fluid)
-
-delta_T_4_4b = 10          # deltaT subcooled low pressure
-T_4 = T_4b - delta_T_4_4b
-h_4 = CP.PropsSI("H", "T", T_4, "P", p_o, fluid)
-h_3 = h_4                   # throttle isenthalp
-T_3 = CP.PropsSI("T", "P", p_c, "H", h_3, fluid)
 s_3 = CP.PropsSI("S", "T", T_3, "P", p_c, fluid)
-
 s_4 = CP.PropsSI("S", "P", p_o, "H", h_4, fluid)
 
 delta_h_sc = h_2c - h_3
 
 delta_h_o = h_1 - h_4
-point_label = ["1", "2", "2b", "2c", "3", "4", "4b", "4c"]
-x = [s_1, s_2, s_2b, s_2c, s_3, s_4, s_4b, s_4c]
-y = [T_1, T_2, T_2b, T_2c, T_3, T_4, T_4b, T_4c]
-for i in range(len(x)):
-    plt.plot(x[i], y[i], '*', markersize=15)
-    plt.annotate(point_label[i], (x[i]+25, y[i]), fontsize=12)
 
-plt.xlabel("s in J/kg/K")
-plt.ylabel("T in K")
-plt.legend()
 
-#plt.show()
 
-# Berechnung des Nassdampfbereichs #
-
-s_i = []
-s_j = []
-t_step = np.linspace(200, 390, 50)
-for t_i in t_step:
-    s_i1 = CP.PropsSI('S', 'T', t_i, 'Q', 0, fluid)
-    s_i2 = CP.PropsSI('S', 'T', t_i, 'Q', 1, fluid)
-    s_i.append(s_i1)
-    s_j.append(s_i2)
-
-plt.plot(s_i, t_step, 'k-')
-plt.plot(s_j, t_step, 'k-', label="wet steam region")
-#plt.xlabel('s in J/kg/K')
-#plt.ylabel('T in K')
-plt.title('T-s-Diagramm für ' + fluid)
-
-# Berechnung Isobare #
-s_step = np.linspace(200, 2700, 100)
-for px in [p_o, p_c]:
-    t_isobar = []
-    for si in s_step:
-        t_iso = CP.PropsSI('T', 'S', si, 'P', px, fluid)
-        t_isobar.append(t_iso)
-
-    plt.plot(s_step, t_isobar, 'b:', label="isobare")
-plt.legend()
 
 print(f"delta_h superheated hp: {delta_h_sh} J/kg")
 print(f"delta_h wet steam hp: {delta_h_ws} J/kg")
@@ -136,6 +112,7 @@ def T_log(T1ein, T1aus, T2ein, T2aus):
 
 # secondary fluid
 cp_w = 4181.9
+cp_methanol = 2438.6
 T_pinch = 5
 T_sc_in = T_3 - T_pinch
 T_sc_out = T_2c - T_pinch * 2
@@ -146,6 +123,8 @@ delta_T_ws = 25
 T_ws_in = T_ws_out - delta_T_ws
 T_evap_out = T_4 + T_pinch
 T_evap_in = T_1 + T_pinch * 2
+
+
 
 
 # size of heat storages
@@ -162,7 +141,7 @@ delta_T_evap = T_evap_in - T_evap_out
 delta_T_sc = T_sc_out - T_sc_in
 
 delta_T_sh = T_sh_out - T_sh_in
-cp_methanol = 2438.6
+
 print(CP.PhaseSI( "T", 281, "D", 801, "Methanol"))
 rho_methanol = CP.PropsSI("D" ,"T", T_1, "P", 1e5, "Methanol")
 
@@ -278,6 +257,92 @@ print(f"length for subcooled: {l_sc} m")
 print(f"length for superheated: {l_sh} m")
 print(f"length for wetsteam: {l_ws} m")
 print(f"length for evaporator: {l_evap} m")
+
+point_label = ["1", "2", "2b", "2c", "3", "4", "4b", "4c"]
+x = [s_1, s_2, s_2b, s_2c, s_3, s_4, s_4b, s_4c]
+
+y = [T_1, T_2, T_2b, T_2c, T_3, T_4, T_4b, T_4c]
+plt.figure(1)
+for i in range(len(x)):
+    plt.plot(x[i], y[i], '*', markersize=15)
+    plt.annotate(point_label[i], (x[i]+25, y[i]), fontsize=12)
+plt.xlabel("s in J/kg/K")
+plt.ylabel("T in K")
+plt.legend()
+
+# Berechnung des Nassdampfbereichs #
+s_i = []
+s_j = []
+t_step = np.linspace(200, 390, 50)
+for t_i in t_step:
+    s_i1 = CP.PropsSI('S', 'T', t_i, 'Q', 0, fluid)
+    s_i2 = CP.PropsSI('S', 'T', t_i, 'Q', 1, fluid)
+    s_i.append(s_i1)
+    s_j.append(s_i2)
+
+plt.plot(s_i, t_step, 'k-')
+plt.plot(s_j, t_step, 'k-', label="wet steam region")
+#plt.xlabel('s in J/kg/K')
+#plt.ylabel('T in K')
+plt.title('T-s-Diagramm für ' + fluid)
+
+# Berechnung Isobare #
+s_step = np.linspace(200, 2700, 100)
+for px in [p_o, p_c]:
+    t_isobar = []
+    for si in s_step:
+        t_iso = CP.PropsSI('T', 'S', si, 'P', px, fluid)
+        t_isobar.append(t_iso)
+
+    plt.plot(s_step, t_isobar, 'b:', label="isobare")
+plt.legend()
+
+# h_dot-T diagram
+x2 = np.array([h_1, h_2, h_2b, h_2c, h_3, h_4, h_4b, h_4c])
+x2 = m_dot * x2
+plt.figure(2)
+for i in range(len(x2)):
+    plt.plot(x2[i], y[i], '*', markersize=15)
+    plt.annotate(point_label[i], (x2[i]+25, y[i]), fontsize=12)
+plt.xlabel("h in J/kg")
+plt.ylabel("T in K")
+plt.legend()
+
+# Berechnung des Nassdampfbereichs #
+h_i = []
+h_j = []
+t_step = np.linspace(200, 390, 50)
+for t_i in t_step:
+    h_i1 = CP.PropsSI('H', 'T', t_i, 'Q', 0, fluid)
+    h_i2 = CP.PropsSI('H', 'T', t_i, 'Q', 1, fluid)
+    h_i.append(h_i1)
+    h_j.append(h_i2)
+
+plt.plot(np.array(h_i) * m_dot, t_step, 'k-')
+plt.plot(np.array(h_j) * m_dot, t_step, 'k-', label="wet steam region")
+#plt.xlabel('h in J/kg')
+#plt.ylabel('T in K')
+plt.title('T-h-Diagramm für ' + fluid)
+
+# Berechnung Isobare #
+h_step = np.linspace(0, 650000, 100) * m_dot
+for px in [p_o, p_c]:
+    t_isobar = []
+    for hi in h_step:
+        t_iso = CP.PropsSI('T', 'H', hi, 'P', px, fluid)
+        t_isobar.append(t_iso)
+
+    plt.plot(h_step, t_isobar, 'b:', label="isobare")
+plt.legend()
+
+# adding secondary fluids to plot figure 2
+T_ref = 273.15
+h_evap_in = CP.PropsSI("H", "P", 1e5, "T", T_evap_in, "REFPROP::methanol")
+h_evap_out = CP.PropsSI("H", "P", 1e5, "T", T_evap_out, "REFPROP::methanol")
+#x_sec_evap = np.linspace(cp_methanol * (T_evap_out-T_ref) * m_evap, cp_methanol * (T_evap_in-T_ref) * m_evap, 100)
+x_sec_evap = np.linspace(h_evap_out * m_evap, h_evap_in * m_evap, 100)
+y_sec_evap = np.linspace(T_evap_out, T_evap_in, 100)
+plt.plot(x_sec_evap, y_sec_evap, 'b')
 
 plt.show()
 
