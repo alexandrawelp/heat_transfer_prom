@@ -66,15 +66,6 @@ s_4 = CP.PropsSI("S", "P", p_o, "H", h_4, fluid)
 delta_h_sc = h_2c - h_3
 
 delta_h_o = h_1 - h_4
-
-# plt.plot(s_1, T_1, '*')
-# plt.plot(s_2, T_2, '*')
-# plt.plot(s_2b, T_c, '*')
-# plt.plot(s_2c, T_c, '*')
-# plt.plot(s_3, T_3, '*')
-# plt.plot(s_4, T_4, '*')
-# plt.plot(s_4b, T_o, '*')
-# plt.plot(s_4c, T_o, '*')
 point_label = ["1", "2", "2b", "2c", "3", "4", "4b", "4c"]
 x = [s_1, s_2, s_2b, s_2c, s_3, s_4, s_4b, s_4c]
 y = [T_1, T_2, T_2b, T_2c, T_3, T_4, T_4b, T_4c]
