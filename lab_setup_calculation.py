@@ -105,25 +105,28 @@ d_a = 18e-3
 d_ai = d_i + 2 * s
 
 def T_log(T1ein, T1aus, T2ein, T2aus):
-    deltaTein = abs(T1ein - T2aus)
-    deltaTaus = abs(T1aus - T2ein)
-    delta_T_log = (deltaTein - deltaTaus) / np.log(deltaTein/deltaTaus)
-    return delta_T_log
+    deltaTein = T1ein - T2aus
+    deltaTaus = T1aus - T2ein
+    if deltaTein == deltaTaus:
+        delta_T_log = deltaTein
+    else:
+        delta_T_log = (deltaTein - deltaTaus) / np.log(deltaTein / deltaTaus)
+    return abs(delta_T_log)
 
 # secondary fluid
-cp_w = 4181.9
-cp_methanol = 2438.6
-T_pinch = 5
+
+T_pinch = 10
 T_sc_in = T_3 - T_pinch
-T_sc_out = T_2c - T_pinch * 2
+T_sc_out = T_2c - T_pinch
 T_sh_in = T_2b - T_pinch
-T_sh_out = T_2 - T_pinch * 2
+T_sh_out = T_2 - T_pinch
 T_ws_out = T_2b - 5
 delta_T_ws = 25
 T_ws_in = T_ws_out - delta_T_ws
 T_evap_out = T_4 + T_pinch
-T_evap_in = T_1 + T_pinch * 2
-
+T_evap_in = T_1 + T_pinch
+cp_w = 4181.9
+cp_methanol = CP.PropsSI("C", "T", 0.5 * (T_evap_in + T_evap_out), "P", 1e5, "REFPROP::methanol")
 
 
 
@@ -304,7 +307,7 @@ plt.figure(2)
 for i in range(len(x2)):
     plt.plot(x2[i], y[i], '*', markersize=15)
     plt.annotate(point_label[i], (x2[i]+25, y[i]), fontsize=12)
-plt.xlabel("h in J/kg")
+plt.xlabel("h_dot in J/s")
 plt.ylabel("T in K")
 plt.legend()
 
@@ -325,24 +328,34 @@ plt.plot(np.array(h_j) * m_dot, t_step, 'k-', label="wet steam region")
 plt.title('T-h-Diagramm für ' + fluid)
 
 # Berechnung Isobare #
-h_step = np.linspace(0, 650000, 100) * m_dot
+h_step = np.linspace(0, 650000, 100)
 for px in [p_o, p_c]:
     t_isobar = []
     for hi in h_step:
         t_iso = CP.PropsSI('T', 'H', hi, 'P', px, fluid)
         t_isobar.append(t_iso)
 
-    plt.plot(h_step, t_isobar, 'b:', label="isobare")
+    plt.plot(h_step * m_dot, t_isobar, 'b:', label="isobare")
 plt.legend()
 
 # adding secondary fluids to plot figure 2
-T_ref = 273.15
-h_evap_in = CP.PropsSI("H", "P", 1e5, "T", T_evap_in, "REFPROP::methanol")
-h_evap_out = CP.PropsSI("H", "P", 1e5, "T", T_evap_out, "REFPROP::methanol")
-#x_sec_evap = np.linspace(cp_methanol * (T_evap_out-T_ref) * m_evap, cp_methanol * (T_evap_in-T_ref) * m_evap, 100)
-x_sec_evap = np.linspace(h_evap_out * m_evap, h_evap_in * m_evap, 100)
+x_sec_evap = np.linspace(h_4 * m_dot, (h_4 + delta_h_o) * m_dot, 100)
 y_sec_evap = np.linspace(T_evap_out, T_evap_in, 100)
 plt.plot(x_sec_evap, y_sec_evap, 'b')
+
+x_sec_sc = np.linspace(h_3 * m_dot, (h_3 + delta_h_sc) * m_dot, 100)
+y_sec_sc = np.linspace(T_sc_in, T_sc_out, 100)
+plt.plot(x_sec_sc, y_sec_sc, 'r')
+
+x_sec_ws = np.linspace(h_2c * m_dot, (h_2c + delta_h_ws) * m_dot, 100)
+y_sec_ws = np.linspace(T_ws_in, T_ws_out, 100)
+plt.plot(x_sec_ws, y_sec_ws, 'r')
+
+x_sec_sh = np.linspace(h_2b * m_dot, (h_2b + delta_h_sh) * m_dot, 100)
+y_sec_sh = np.linspace(T_sh_in, T_sh_out, 100)
+plt.plot(x_sec_sh, y_sec_sh, 'r')
+
+
 
 plt.show()
 
