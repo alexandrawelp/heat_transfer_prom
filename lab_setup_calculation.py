@@ -166,6 +166,7 @@ delta_T_ws = 25
 T_ws_in = T_ws_out - delta_T_ws
 T_evap_out = T_4 + T_pinch
 T_evap_in = T_1 + T_pinch
+
 cp_ws_water = CP.PropsSI("C", "T", 0.5 * (T_ws_out + T_ws_in), "P", 1e5, "REFPROP::water")
 rho_ws_water = CP.PropsSI("D", "T", 0.5 * (T_ws_out + T_ws_in), "P", 1e5, "REFPROP::water")
 cp_sc_water = CP.PropsSI("C", "T", 0.5 * (T_sc_out + T_sc_in), "P", 1e5, "REFPROP::water")
@@ -205,10 +206,6 @@ print(f"Q_storage_sh: {Q_storage_sh/1000} kJ,= {Q_storage_sh/3600/1000} kWh, {V_
 
 
 # calculate heat transfer coefficients
-
-
-
-
 m_sc_dot = m_dot * delta_h_sc / (cp_sc_water * delta_T_sc)
 m_sh_dot = m_dot * delta_h_sh / (cp_thermooil * delta_T_sh)
 m_ws_dot = m_dot * delta_h_ws / (cp_ws_water * delta_T_ws)
@@ -241,9 +238,6 @@ dPsat = CP.PropsSI("P", "T", T_excess, "Q", 0, fluid) - p_o
 alpha_evap_i = ht.boiling_flow.Chen_Bennett(m_dot, 0.5, d_i, rho_l_evap, rho_v_evap, mu_l_evap, mu_v_evap, k_l_evap
                                             , cp_l_evap, h_evap, sigma_evap, dPsat, T_excess)
 alpha_evap_o = alpha_1P_annulus(1e5, 0.5 * (T_evap_in + T_evap_out), 'methanol', m_evap, d_ai, d_a)
-
-
-
 
 
 lam_tube = 300
