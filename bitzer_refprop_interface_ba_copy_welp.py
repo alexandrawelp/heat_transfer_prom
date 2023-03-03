@@ -14,19 +14,23 @@ import numpy as np
 _props = "REFPROP"
 Tevap = 273.15 - 20
 Tcond = 273.15+60
-Tin = 273.15 + 20
+#Tin = 273.15 + 20
 Tout = 273.15 + 131.5
 
 fluid_s = "Propane * Pentane"
 comp = [.4, 0.6]
-fluid_s = "Butane"
+fluid_s = "Propane"
 comp = [1]
+d = 0.038
+h = 0.033
+f = 50
+V_h = np.pi * d ** 2 * h * 0.25
 #secondary_fluid = CP.AbstractState("TTSE&HEOS", fluid_s)
 # interesting, when using "BICUBIC&HEOS" the exergy of the ambient state is 0.15!
 
 #statedata = fprop.T_prop_sat(Tevap, fluid_s, composition = comp, option=1)
 
-def eta_calc(Tev, Tcond, Tin=Tin, fluid_s =fluid_s):
+def eta_calc(Tev, Tcond, Tin, fluid_s =fluid_s):
     """
     Calculate the isentropic work for different condenser and evaporator 
     pressures (at given T =Input) and compare it with the specific work
@@ -59,13 +63,13 @@ def eta_calc(Tev, Tcond, Tin=Tin, fluid_s =fluid_s):
     cond = fprop.T_prop_sat(Tcond, fluid_s, composition = comp, option=1) # condenser pressure
     # isentropic state after compressor
     comp_s = fprop.sp(comp_in[ 4], cond, fluid_s, composition=comp)
-    print(f"comp_s {comp_s}")
+    #print(f"comp_s {comp_s}")
     dhs = comp_s[2] - comp_in[2]
     
     to = Tev-273.15
     tc = Tcond-273.15
 
-    coeff_Q, coeff_P, coeff_m = comper.read_file("polynom-2EESP-2P.xlsx")
+    coeff_Q, coeff_P, coeff_m = comper.read_file("HESP-2P_20temsuction.xlsx")
     Q, power_el, mdot = comper.cal_range(to, tc, coeff_Q, coeff_P, coeff_m)
     #power_el = br.bitzer_pol(to, tc, br.cP)
     #mdot = br.bitzer_pol(to, tc, br.cm) / 3600
@@ -76,11 +80,65 @@ def eta_calc(Tev, Tcond, Tin=Tin, fluid_s =fluid_s):
     v_ratio = comp_out[3] / comp_in[3]
     p_ratio = comp_out[1] / comp_in[1]
     etas = dhs / dh
+    # degree of delivery
+    eta_vol = mdot / (V_h * f * 1/comp_in[3])
     
     return np.array([etas, comp_out[0], comp_out[1], evap, v_ratio,
-                     p_ratio, power_el, mdot])
+                     p_ratio, power_el, mdot, eta_vol])
 
 if __name__ == "__main__":
+    fi, ax = plt.subplots(3, 3)
+    Te = np.linspace(-25, 0 , 36) + 273.15
+    Tc = np.linspace(30, 60, 31) + 273.15
+    result = np.zeros([31, 36, 9])
+    grid_x = np.linspace(0, 36, 37)
+    grid_y = np.linspace(0, 31, 32)
+    for i, te in enumerate(Te):
+        Tin = te + 10
+        for j, tc in enumerate(Tc):
+            result[j, i] = eta_calc(te, tc, Tin)
+    t = np.linspace(0, 8, 9)
+    name = ["isentropic efficiency", "outlet temperature", "outlet pressure", "evaporator pressure", "V_out / V_in", "pressure ratio",
+            "electric power", "massflow", "volumetric efficiency"]
+    for step in t:
+        if any(step==[0,1,2]):
+            x = 0
+            y = int(step)
+        if any(step==[3,4,5]):
+            x = 1
+            y = int(step-3)
+        if any(step==[6,7,8]):
+            x = 2
+            y = int(step - 6)
+        plot1 = ax[x, y].pcolormesh(result[:, :, int(step)])
+
+        ax[x, y].set_xlabel("te, evaporating temperature")
+        ax[x, y].set_ylabel("tc, condensing temperature")
+        ax[x, y].set_title(name[int(step)])
+        plt.colorbar(plot1)
+
+    plt.subplots_adjust(left=0.125,
+                       bottom=0.057,
+                       right=0.9,
+                       top=0.964,
+                       wspace=0.2,
+                       hspace=0.36)
+
+
+    #ax.title("eta")
+    plt.show()
+
+
+    #T,p,h,v,s,x
+
+
+
+
+
+
+
+backup = "no"
+if backup == "yes":
     fi, ax = plt.subplots(2, 2)
     n_no = 5
     col = ["b.", "ro-", "k", "k.", "bv-"]
@@ -99,9 +157,9 @@ if __name__ == "__main__":
         i.set_xlabel("tc, condensing temperature in °C")
     ax[0,0].set_ylabel("eta_s")
     ax[0,1].set_ylabel("T_out")
-    ax[1,0].set_ylabel("Power_el")
-    ax[1,1].set_ylabel("m_dot")
-ax[1, 1].legend()
-fi.savefig("bitzer2EESP-05PProbe.png")
-print(eta_calc(Tevap, Tcond))
-plt.show()
+    ax[1,0].set_ylabel("m_dot")
+    ax[1,1].set_ylabel("eta_vol")
+    ax[1, 1].legend()
+    fi.savefig("bitzer2EESP-05PProbe.png")
+    #print(eta_calc(Tevap, Tcond))
+    plt.show()
