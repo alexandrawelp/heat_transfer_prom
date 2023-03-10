@@ -53,11 +53,11 @@ def eta_calc(Tev, Tcond, Tin, fluid_s =fluid_s):
 
     """
     comp = [1]
-    evap = fprop.T_prop_sat(Tev, fluid_s, composition=comp, option=1) # evaporator pressure
+    evap = fprop.T_prop_sat(Tev, fluid_s, composition=comp, option=1)[1][1] # evaporator pressure
     comp_in = fprop.tp(Tin, evap, fluid_s, composition=comp, option=1)  # compressor entrance at 20C
-    cond = fprop.T_prop_sat(Tcond, fluid_s, composition = comp, option=1) # condenser pressure
+    cond = fprop.T_prop_sat(Tcond, fluid_s, composition = comp, option=1)[1][1] # condenser pressure
     # isentropic state after compressor
-    comp_s = fprop.sp(comp_in[ 4], cond, fluid_s, composition=comp)
+    comp_s = fprop.sp(comp_in[4], cond, fluid_s, composition=comp)
     #print(f"comp_s {comp_s}")
     dhs = comp_s[2] - comp_in[2]
     
@@ -81,25 +81,29 @@ def eta_calc(Tev, Tcond, Tin, fluid_s =fluid_s):
     return np.array([etas, comp_out[0], comp_out[1], evap, v_ratio,
                      p_ratio, power_el, mdot, eta_vol])
 
-if __name__ == "__main__":
-    name_compressor = "2CESP-3P.xlsx"
-    fluid = "Propane"
-    comp = [1.0]
+def get_data(name_compressor):
     file_dir = os.path.dirname(os.path.realpath('__file__'))
-    file_path = os.path.join(file_dir,'data','R290 Verdichter', 'R290 Verdichter', name_compressor)
+    file_path = os.path.join(file_dir, 'data', 'R290 Verdichter', 'R290 Verdichter', name_compressor)
     print(file_path)
     read_file = pd.read_excel(file_path, header=33, usecols=[3, 4, 5])
     Te_min = float(read_file.iloc[0, 0][:-2])
     Te_max = float(read_file.iloc[0, 2][:-2])
     Tc_min = float(read_file.iloc[1, 0][:-2])
     Tc_max = float(read_file.iloc[1, 2][:-2])
-    points = 10
-    Te = np.linspace(Te_min, Te_max, points)+273.15
-    Tc = np.linspace(Tc_min, Tc_max, points)+273.15
     read_file2 = pd.read_excel(file_path, header=42, usecols=[2, 3, 4])
     d = read_file2.iloc[0, 0]
     h = read_file2.iloc[0, 1]
     f = read_file2.iloc[0, 2]
+    return Te_min, Te_max, Tc_min, Tc_max, d, h, f
+
+if __name__ == "__main__":
+    name_compressor = "2CESP-3P.xlsx"
+    Te_min, Te_max, Tc_min, Tc_max, d, h, f = get_data(name_compressor)
+    fluid = "Propane"
+    comp = [1.0]
+    points = 10
+    Te = np.linspace(Te_min, Te_max, points)+273.15
+    Tc = np.linspace(Tc_min, Tc_max, points)+273.15
     V_h = 0.25 * np.pi * d ** 2 * h
     T_in = 20 + 273.15
     fi, ax = plt.subplots(2, 2)
