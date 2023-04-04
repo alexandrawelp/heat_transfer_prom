@@ -11,11 +11,12 @@ from scipy.integrate import solve_bvp
 import matplotlib.pyplot as plt
 import fluid_properties_rp as fprop
 from scipy.optimize import root
+import ht as ht
 
 _props = "REFPROP"
 
-def heat_exchanger_counter_current(x, h, p1, p2, fluid_1, fluid_2, di, alpha_local, m_dot_1, m_dot_2):
-    T_AF = fprop.hp_v(h[0], p1, fluid_1)[0]
+def heat_exchanger_counter_current(x, h, p1, p2, fluid_1, fluid_2, comp, di, alpha_local, m_dot_1, m_dot_2):
+    T_AF = fprop.hp_v(h[0], p1, fluid_1, comp)[0]
     T_SF = fprop.hp_v(h[1], p2, fluid_2)[0]
     delta_T = T_AF - T_SF
     dhdx_0 = -np.pi * di * alpha_local * delta_T / m_dot_1
@@ -113,6 +114,26 @@ def get_overall_temperatures(T_KM_ein, T_W_out, p_KM, p_W, resolution, di, alpha
     T_W_ein = fprop.hp_v(res.y[1], p_W, fluid_2)[0]
     return T_KM_aus, T_W_ein, h_KM, h_W
 
+def get_alpha(p, h , fluid, comp, m_dot, d):
+    # superheated, wet-steam or subcooled
+    T_AF = fprop.hp_v(h, p, fluid, comp)[0]
+    sat_state = fprop.p_prop_sat(p, fluid, comp, option=0)
+    if T_AF < sat_state[1,0]:
+        state = "subcooled"
+        alpha =
+    elif T_AF > sat_state[0,0]:
+        state = "superheated"
+    else:
+        state = "wet-steam"
+        x = (h - sat_state[1,2]) / (sat_state[0,2] - sat_state[1,2])
+        alpha = ht.condensation.Cavallini_Smith_Zecchin(m_dot, x, d, 1/sat_state[1,3], 1/sat_state[0,3],
+                                                        sat_state[1,7], sat_state[0,7], sat_state[1,8], sat_state[2,6])
+
+    # calculate alpha local:
+
+
+
+
 
 if __name__ == "__main__":
     fluid_1 = "Propane;Isobutane"
@@ -207,5 +228,27 @@ if __name__ == "__main__":
     plt.xlabel("length in m")
     plt.ylabel("h in J/kg")
     plt.legend()
+
+    x_var_counter = np.linspace(0,16,resolution)
+    h_schaetz_counter = np.zeros((2,resolution))
+    h1_ein = fprop.tp(T_KM1, p_KM, fluid_1, comp)[2]
+    h2_ein = fprop.tp(T_W1_real, p_W, fluid_2)[2]
+    x_var = np.linspace(0, l, resolution)
+    h_schaetz = np.zeros((2, resolution))
+    h_schaetz[0, :] = h1_ein
+    h_schaetz[1, :] = h2_ein
+
+    res = solve_bvp(lambda x, h: heat_exchanger_counter_current(x, h, p_KM, p_W, fluid_1, fluid_2, comp, di, alpha_local, m_dot_1, m_dot_2),
+                    bc_he_counter, x_var_counter, h_schaetz_counter)
+    h_KM_counterflow = res.y[0]
+    h_W_counterflow = res.y[1]
+    T_KM_counterflow = fprop.hp_v(h_KM_counterflow, p_KM, fluid_1, comp)[0]
+    T_W_counterflow = fprop.hp_v(h_W_counterflow, p_W, fluid_2)[0]
+
+    plt.figure(2)
+    plt.plot(np.linspace(0,16,len(T_KM_counterflow)), T_KM_counterflow, ':b', label="working fluid counterflow")
+    plt.plot(np.linspace(0,16,len(T_W_counterflow)), T_W_counterflow, ':r', label="water counterflow")
+    plt.legend()
+
     plt.show()
 
