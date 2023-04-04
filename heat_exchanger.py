@@ -116,19 +116,19 @@ def get_overall_temperatures(T_KM_ein, T_W_out, p_KM, p_W, resolution, di, alpha
 
 if __name__ == "__main__":
     fluid_1 = "Propane;Isobutane"
-    comp = [0.4, 0.6]
+    comp = [1-0.26568, 0.26568]
     fluid_2 = "water"
-    m_dot_1 = 10e-3
-    m_dot_2 = 10e-3
-    p_KM = 6e5
+    m_dot_1 = 9.16e-3
+    m_dot_2 = 78.3e-3
+    p_KM = 1278595
     p_W = 1e5
 
-    alpha_local = 400
-    di = 10e-3
+    alpha_local = 1000
+    di = 12e-3
     l = 2
-    T_KM1 = 34 + 273.15
-    T_W1_real = 4 +273.15
-    T_W9_guess = 30 + 273.15
+    T_KM1 = 77.18 + 273.15
+    T_W1_real = 40.7 +273.15
+    T_W9_guess = 50 + 273.15
     resolution = 100
 
     res = root(linked_he, T_W9_guess, args=(T_KM1, T_W1_real, p_KM, p_W, fluid_1, fluid_2, comp, resolution))
@@ -151,58 +151,58 @@ if __name__ == "__main__":
                              fluid_2, comp)
 
     plt.figure(2)
-    plt.plot(np.linspace(0,2,resolution), T_KM_R1, '-b')
-    plt.plot(np.linspace(0, 2, resolution), T_W_R1, '-r')
+    plt.plot(np.linspace(0, 2, len(T_KM_R1)), T_KM_R1, '-b')
+    plt.plot(np.linspace(0, 2, len(T_W_R1)), T_W_R1, '-r')
 
-    plt.plot(np.linspace(2, 4, resolution), T_KM_R2, '-b')
-    plt.plot(np.linspace(2, 4, resolution), T_W_R2, '-r')
+    plt.plot(np.linspace(2, 4, len(T_KM_R2)), T_KM_R2, '-b')
+    plt.plot(np.linspace(2, 4, len(T_W_R2)), T_W_R2, '-r')
 
-    plt.plot(np.linspace(4, 6, resolution), T_KM_R3, '-b')
-    plt.plot(np.linspace(4, 6, resolution), T_W_R3, '-r')
+    plt.plot(np.linspace(4, 6, len(T_KM_R3)), T_KM_R3, '-b')
+    plt.plot(np.linspace(4, 6, len(T_W_R3)), T_W_R3, '-r')
 
-    plt.plot(np.linspace(6, 8, resolution), T_KM_R4, '-b')
-    plt.plot(np.linspace(6, 8, resolution), T_W_R4, '-r')
+    plt.plot(np.linspace(6, 8, len(T_KM_R4)), T_KM_R4, '-b')
+    plt.plot(np.linspace(6, 8, len(T_W_R4)), T_W_R4, '-r')
 
-    plt.plot(np.linspace(8, 10, resolution), T_KM_R5, '-b')
-    plt.plot(np.linspace(8, 10, resolution), T_W_R5, '-r')
+    plt.plot(np.linspace(8, 10, len(T_KM_R5)), T_KM_R5, '-b')
+    plt.plot(np.linspace(8, 10, len(T_W_R5)), T_W_R5, '-r')
 
-    plt.plot(np.linspace(10, 12, resolution), T_KM_R6, '-b')
-    plt.plot(np.linspace(10, 12, resolution), T_W_R6, '-r')
+    plt.plot(np.linspace(10, 12, len(T_KM_R6)), T_KM_R6, '-b')
+    plt.plot(np.linspace(10, 12, len(T_W_R6)), T_W_R6, '-r')
 
-    plt.plot(np.linspace(12, 14, resolution), T_KM_R7, '-b')
-    plt.plot(np.linspace(12, 14, resolution), T_W_R7, '-r')
+    plt.plot(np.linspace(12, 14, len(T_KM_R7)), T_KM_R7, '-b')
+    plt.plot(np.linspace(12, 14, len(T_W_R7)), T_W_R7, '-r')
 
-    plt.plot(np.linspace(14, 16, resolution), T_KM_R8, '-b', label="working fluid")
-    plt.plot(np.linspace(14, 16, resolution), T_W_R8, '-r', label="water")
+    plt.plot(np.linspace(14, 16, len(T_KM_R8)), T_KM_R8, '-b', label="working fluid")
+    plt.plot(np.linspace(14, 16, len(T_W_R8)), T_W_R8, '-r', label="water")
 
     plt.xlabel("length in m")
     plt.ylabel("T in K")
     plt.legend()
 
     plt.figure(3)
-    plt.plot(np.linspace(0, 2, resolution), h_KM_R1, '-b')
-    plt.plot(np.linspace(0, 2, resolution), h_W_R1, '-r')
+    plt.plot(np.linspace(0, 2, len(h_KM_R1)), h_KM_R1, '-b')
+    plt.plot(np.linspace(0, 2, len(h_W_R1)), h_W_R1, '-r')
 
-    plt.plot(np.linspace(2, 4, resolution), h_KM_R2, '-b')
-    plt.plot(np.linspace(2, 4, resolution), h_W_R2, '-r')
+    plt.plot(np.linspace(2, 4, len(h_KM_R2)), h_KM_R2, '-b')
+    plt.plot(np.linspace(2, 4, len(h_W_R2)), h_W_R2, '-r')
 
-    plt.plot(np.linspace(4, 6, resolution), h_KM_R3, '-b')
-    plt.plot(np.linspace(4, 6, resolution), h_W_R3, '-r')
+    plt.plot(np.linspace(4, 6, len(h_KM_R3)), h_KM_R3, '-b')
+    plt.plot(np.linspace(4, 6, len(h_W_R3)), h_W_R3, '-r')
 
-    plt.plot(np.linspace(6, 8, resolution), h_KM_R4, '-b')
-    plt.plot(np.linspace(6, 8, resolution), h_W_R4, '-r')
+    plt.plot(np.linspace(6, 8, len(h_KM_R4)), h_KM_R4, '-b')
+    plt.plot(np.linspace(6, 8, len(h_W_R4)), h_W_R4, '-r')
 
-    plt.plot(np.linspace(8, 10, resolution), h_KM_R5, '-b')
-    plt.plot(np.linspace(8, 10, resolution), h_W_R5, '-r')
+    plt.plot(np.linspace(8, 10, len(h_KM_R5)), h_KM_R5, '-b')
+    plt.plot(np.linspace(8, 10, len(h_W_R5)), h_W_R5, '-r')
 
-    plt.plot(np.linspace(10, 12, resolution), h_KM_R6, '-b')
-    plt.plot(np.linspace(10, 12, resolution), h_W_R6, '-r')
+    plt.plot(np.linspace(10, 12, len(h_KM_R6)), h_KM_R6, '-b')
+    plt.plot(np.linspace(10, 12, len(h_W_R6)), h_W_R6, '-r')
 
-    plt.plot(np.linspace(12, 14, resolution), h_KM_R7, '-b')
-    plt.plot(np.linspace(12, 14, resolution), h_W_R7, '-r')
+    plt.plot(np.linspace(12, 14, len(h_KM_R7)), h_KM_R7, '-b')
+    plt.plot(np.linspace(12, 14, len(h_W_R7)), h_W_R7, '-r')
 
-    plt.plot(np.linspace(14, 16, resolution), h_KM_R8, '-b', label="working fluid")
-    plt.plot(np.linspace(14, 16, resolution), h_W_R8, '-r', label="water")
+    plt.plot(np.linspace(14, 16, len(h_KM_R8)), h_KM_R8, '-b', label="working fluid")
+    plt.plot(np.linspace(14, 16, len(h_W_R8)), h_W_R8, '-r', label="water")
 
     plt.xlabel("length in m")
     plt.ylabel("h in J/kg")
