@@ -27,12 +27,13 @@ z_it = np.zeros([IS, 16])
 pZ = np.zeros(7, float)
 ###############################     parameter set specific for compressor   ###################################
 
-pV = [34e-3, 34e-3, 3.5, .04, .06071, 48.916, 50., 50. / 2., 2.]  # parameter see above
+pV = [d, h, 3.5, .04, .06071, 48.916, 50., 50. / 2., 2.]  # parameter see above
 fo = open("Daten.txtx", "w")
 #################################################################################################################
 count = 0
 for te in Te:
     eta_s = []
+
     eta_v = []
     pe = fp.T_prop_sat(te, fluid, comp)[1][1]/1000  # fl.zs_kg(['T','q'],[0.,0.],['p'],fluid)[0]
     for tc in Tc:

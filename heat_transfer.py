@@ -1,30 +1,51 @@
-# simplified alpha calculation from Nusselt correlation for BA Gertenbach
+'''
+heat transfer calculation for heat exchanger
+'''
+# import libraries
+import fluid_properties_rp as fprop
+import numpy as np
+import ht as ht
 
-def alpha_inside_tube(re: object, pr: object, lambda_fluid: object, d_i: object) -> object:
+def alpha_condenser(p, h , fluid, comp, m_dot, d, x_position=None, rel_roughness=None, darcy_friction=None):
     """
-    calculates the heat transfer coefficient for inner tube, only turbulent case
-    :rtype: object
-    :param re: Reynoldsnumber, dimensionless
-    :param pr: Prandtlnumber, dimensionless
-    :param lambda_fluid: thermal conductivity of fluid, W/(Km)
-    :param d_i: inner diameter, m
-    :return: heat transfer coefficient, W/(m**2*K)
+    calculates alpha for condensation and superheated/subcooled state before or after
+    defines state first, for working fluids mixtures
+    uses correlations from ht heat transfer database
+    :param p: pressure [Pa]
+    :param h: enthalpy [J/(kg*K)]
+    :param fluid: fluid name [string]
+    :param comp: fluid composition in format [x_a, x_b]
+    :param m_dot: mass flow [kg/s]
+    :param d: inner diameter
+    :param x_position: axial position in tube if available [m]
+    :param rel_roughness: relative roughness if available [-]
+    :param darcy_friction: darcy friction factor if available [-]
+    :return: alpha [W/(m^2*K)]
     """
-    if re < 10000:
-        print("ERROR: only applicable for turbulent flow")
-    nu = 0.023 * re ** (4/5) * pr ** 0.3                # 0.3 for cooling inner fluidtl-
-    alpha = nu * lambda_fluid / d_i
+    # superheated, wet-steam or subcooled
+    act_state = fprop.hp_v(h, p, fluid, comp, option=0)
+    T_AF = act_state[0]
+    sat_state = fprop.p_prop_sat(p, fluid, comp, option=0)
+    Re =  4 * m_dot / (act_state[7] * np.pi * d)
+
+    if T_AF < sat_state[1,0]:
+        # subcooled
+        alpha = ht.conv_internal.Nu_conv_internal(Re, act_state[9], eD=rel_roughness, Di=d, x=x_position, fd=darcy_friction)
+
+    elif T_AF > sat_state[0,0]:
+        # superheated
+        alpha = ht.conv_internal.Nu_conv_internal(Re, act_state[9], Di=d, x=x_position)
+
+    else:
+        # wet-steam
+        x = (h - sat_state[1,2]) / (sat_state[0,2] - sat_state[1,2])
+        alpha = ht.condensation.Cavallini_Smith_Zecchin(m_dot, x, d, 1/sat_state[1,3], 1/sat_state[0,3],
+                                                        sat_state[1,7], sat_state[0,7], sat_state[1,8], sat_state[2,6])
     return alpha
+alpha_condenser_vec = np.vectorize(alpha_condenser)
 
 
-def alpha_outside_tube(d_ai, d_aa, lambda_fluid):
-    """
-    calculates the heat transfer coefficient for outer tube, only laminar flow
-    :param d_ai: inner diameter of outer tube, m
-    :param d_aa: outer diameter of outer tube, m
-    :param lambda_fluid: thermal conductivity of fluid, W/(mK)
-    :return: heat transfer coefficient, W/(m**2*K)
-    """
-    nu = 3.66 + 1.2 * (d_ai / d_aa) ** (-0.8)
-    alpha = nu * lambda_fluid / (d_aa - d_ai)
-    return alpha
+
+def alpha_tube_annulus():
+
+

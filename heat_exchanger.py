@@ -114,22 +114,15 @@ def get_overall_temperatures(T_KM_ein, T_W_out, p_KM, p_W, resolution, di, alpha
     T_W_ein = fprop.hp_v(res.y[1], p_W, fluid_2)[0]
     return T_KM_aus, T_W_ein, h_KM, h_W
 
-def get_alpha(p, h , fluid, comp, m_dot, d):
-    # superheated, wet-steam or subcooled
-    T_AF = fprop.hp_v(h, p, fluid, comp)[0]
-    sat_state = fprop.p_prop_sat(p, fluid, comp, option=0)
-    if T_AF < sat_state[1,0]:
-        state = "subcooled"
-        alpha =
-    elif T_AF > sat_state[0,0]:
-        state = "superheated"
-    else:
-        state = "wet-steam"
-        x = (h - sat_state[1,2]) / (sat_state[0,2] - sat_state[1,2])
-        alpha = ht.condensation.Cavallini_Smith_Zecchin(m_dot, x, d, 1/sat_state[1,3], 1/sat_state[0,3],
-                                                        sat_state[1,7], sat_state[0,7], sat_state[1,8], sat_state[2,6])
 
-    # calculate alpha local:
+
+def heat_transfer_tube(p_KM, h, fluid_1, fluid_2, comp, m_dot_1, d, s, x_position):
+    d_a = di + 2 * s
+    # convective thermal resistance inside tube
+    alpha_i = get_alpha(p_KM, h, fluid_1, comp, m_dot_1, d, x_position)
+    Ri_Ai = 1 / alpha_i
+
+
 
 
 
